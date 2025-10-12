@@ -24,7 +24,16 @@ The app strengthens the football community by combining *social connection, **lo
 -  *Travel Mode* — Match with players when you’re out of town or abroad.  
 -  *Position Filter* — Search players by position (goalkeeper, defender, striker, etc.).  
 •⁠  ⁠*Halısaha Integration* — Connect with field owners and automate reservations.  
--  *Player Profiles* — Showcase skill level, position, and play history.  
+-  *Player Profiles* — Showcase skill level, position, and play history.
+
+## Team Information
+
+- Berk Karaduman
+- Vedude Rabia Sözkesen
+- Elif Tuana Doğan
+- Mehmet Fatih Paksoy
+- Ömer Ersoy
+- Arda Dinç 
 
 ---
 
