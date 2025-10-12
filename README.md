@@ -38,4 +38,3 @@ The app strengthens the football community by combining *social connection, **lo
 ---
 
 ###  "Find your match. Call your game." — FootCall
-CS310 Mobile App Development
