@@ -28,12 +28,12 @@ The app strengthens the football community by combining *social connection, **lo
 
 ## Team Information
 
-- Berk Karaduman: Finding the app name, openning a group for members.
-- Vedude Rabia Sözkesen: Openning and arranging the GitHub repository.
-- Elif Tuana Doğan: Preparing the project description and creating the content.
-- Mehmet Fatih Paksoy: Preparing the project proposal document 
-- Ömer Ersoy: Developing the ideas and content
-- Arda Dinç : Developing the ideas and content
+- Berk Karaduman (29428): Finding the app name, openning a group for members.
+- Vedude Rabia Sözkesen (32182): Openning and arranging the GitHub repository.
+- Elif Tuana Doğan (31914): Preparing the project description and creating the content.
+- Mehmet Fatih Paksoy (32519): Preparing the project proposal document 
+- Ömer Ersoy (32572): Developing the ideas and content
+- Arda Dinç (31256): Developing the ideas and content
 
 ---
 
