@@ -213,12 +213,10 @@ class _TeamLogo extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.shield,
-        color: kAppBlueCard,
-        size: 32,
+        image: const DecorationImage(
+          image: AssetImage('lib/images/team_logo.png'), // Updated path
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

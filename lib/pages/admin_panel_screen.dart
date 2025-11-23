@@ -121,7 +121,7 @@ class _PlayerRequestCard extends StatelessWidget {
           const CircleAvatar(
             radius: 28,
             backgroundImage: AssetImage(
-              'assets/sample_player.png', // or use NetworkImage / placeholder
+              'lib/images/sample_player.jpeg', // or use NetworkImage / placeholder
             ),
           ),
           const SizedBox(width: 16),
@@ -170,7 +170,7 @@ class _PlayerResponsesCard extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 28,
-            backgroundImage: AssetImage('assets/sample_player.png'),
+            backgroundImage: AssetImage('lib/images/sample_player.jpeg'),
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -219,7 +219,7 @@ class _ManageTeamCard extends StatelessWidget {
         children: [
           const CircleAvatar(
             radius: 28,
-            backgroundImage: AssetImage('assets/sample_player.png'),
+            backgroundImage: AssetImage('lib/images/sample_player.jpeg'),
           ),
           const SizedBox(width: 16),
           const Expanded(
