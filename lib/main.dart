@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'pages/first_page_screen.dart';
+import 'pages/sign_up_page.dart';
+import 'pages/login_page.dart';
+import 'pages/home_page.dart';
 import 'pages/admin_panel_screen.dart';
 import 'pages/create_match_screen.dart';
 import 'pages/match_info_screen.dart';
@@ -25,9 +29,12 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      initialRoute: '/matches', // Set initial route
+      initialRoute: '/', // Set initial route
       routes: {
-        '/': (context) => const MainMenuScreen(),
+        '/': (context) => const FirstPageScreen(),      // First
+        '/login': (context) => const LoginPage(),       // Sign In
+        '/signup': (context) => const SignUpPage(),     // Sign Up
+        '/home': (context) => const HomePage(),
         '/matches': (context) => MatchesScreen(),
         '/match-info': (context) => const MatchInfoScreen(),
         '/create-match': (context) => const CreateMatchScreen(),
