@@ -11,6 +11,7 @@ import 'pages/matches_screen.dart';
 import 'pages/player_request_screen.dart';
 import 'pages/teams_screen.dart';
 import 'pages/player_info_screen.dart';
+import 'pages/my_player.dart';
 import 'utils/colors.dart';
 
 void main() {
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/requests': (context) => const PlayerRequestsScreen(),
         '/teams': (context) => const TeamsScreen(),
         '/player-info': (context) => const PlayerInfoScreen(),
+        '/my-player': (context) => const MyPlayerPage(),
       },
     );
   }
