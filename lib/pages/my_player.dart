@@ -19,6 +19,7 @@ class MyPlayerPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: kAppBackground,
       appBar: AppBar(
+        automaticallyImplyLeading: false, // This removes the back button
         backgroundColor: kAppGreen,
         foregroundColor: Colors.white,
         title: const Text("My Player", style: kHeaderTextStyle),
