@@ -47,6 +47,40 @@ class RequestRepository {
       ..insert(0, request);
     playerRequestsNotifier.value = updated;
   }
+
+  /// Add team request for a specific match creator (admin)
+  void addTeamRequestForCreator(MatchModel match, String creatorName) {
+    final request = TeamRequest(
+      id: _uuid.v4(),
+      teamName: placeholderTeamName,
+      matchTitle: match.matchTitle,
+      matchId: match.id,
+      createdAt: DateTime.now(),
+    );
+    // Note: In a real implementation, this would send to the creator's request list
+    // For now, we add it to the general team requests list
+    // The creator name is stored in match.creatorName for reference
+    final updated = List<TeamRequest>.from(teamRequestsNotifier.value)
+      ..insert(0, request);
+    teamRequestsNotifier.value = updated;
+  }
+
+  /// Add player request for a specific match creator (admin)
+  void addPlayerRequestForCreator(MatchModel match, String creatorName) {
+    final request = PlayerJoinRequest(
+      id: _uuid.v4(),
+      playerName: placeholderPlayerName,
+      matchTitle: match.matchTitle,
+      matchId: match.id,
+      createdAt: DateTime.now(),
+    );
+    // Note: In a real implementation, this would send to the creator's admin panel
+    // For now, we add it to the general player requests list
+    // The creator name is stored in match.creatorName for reference
+    final updated = List<PlayerJoinRequest>.from(playerRequestsNotifier.value)
+      ..insert(0, request);
+    playerRequestsNotifier.value = updated;
+  }
 }
 
 

@@ -8,10 +8,198 @@ import '../utils/styles.dart';
 // Replaced AppBottomNavBar with local _HomeBottomBar implementation (or shared widget)
 // import '../widgets/app_bottom_nav.dart'; 
 
-class MatchesScreen extends StatelessWidget {
-  MatchesScreen({super.key});
+class MatchesScreen extends StatefulWidget {
+  const MatchesScreen({super.key});
 
+  @override
+  State<MatchesScreen> createState() => _MatchesScreenState();
+}
+
+class _MatchesScreenState extends State<MatchesScreen> {
   final MatchRepository _repository = MatchRepository.instance;
+  String? _filterCity;
+  String? _filterDistrict;
+  String? _filterTeamName;
+  String? _filterTime;
+
+  /// Check if match time interval is inside the filter time interval
+  /// Example: match "12.00-14.00" is inside filter "12.00-15.00"
+  bool _isTimeIntervalInside(String matchTimeRange, String filterTimeRange) {
+    try {
+      // Parse match time range (e.g., "12.00-14.00")
+      final matchParts = matchTimeRange.split('-');
+      if (matchParts.length != 2) {
+        // Fallback to simple contains if format is unexpected
+        return matchTimeRange.toLowerCase().contains(filterTimeRange.toLowerCase());
+      }
+      
+      final matchStart = _parseTime(matchParts[0].trim());
+      final matchEnd = _parseTime(matchParts[1].trim());
+      
+      // Parse filter time range (e.g., "12.00-15.00" or just "12.00")
+      final filterParts = filterTimeRange.split('-');
+      if (filterParts.length == 1) {
+        // Single time value - check if it's within match range
+        final filterTime = _parseTime(filterParts[0].trim());
+        return filterTime >= matchStart && filterTime <= matchEnd;
+      } else if (filterParts.length == 2) {
+        // Time range - check if match interval is inside filter interval
+        final filterStart = _parseTime(filterParts[0].trim());
+        final filterEnd = _parseTime(filterParts[1].trim());
+        
+        // Match is inside filter if match start >= filter start and match end <= filter end
+        return matchStart >= filterStart && matchEnd <= filterEnd;
+      }
+      
+      return false;
+    } catch (e) {
+      // Fallback to simple contains if parsing fails
+      return matchTimeRange.toLowerCase().contains(filterTimeRange.toLowerCase());
+    }
+  }
+
+  /// Parse time string (e.g., "12.00" or "12:00") to minutes since midnight
+  int _parseTime(String timeStr) {
+    // Remove any non-digit characters except dot and colon
+    timeStr = timeStr.replaceAll(RegExp(r'[^\d.:]'), '');
+    
+    // Handle both "12.00" and "12:00" formats
+    final parts = timeStr.contains(':') 
+        ? timeStr.split(':') 
+        : timeStr.split('.');
+    
+    if (parts.length >= 2) {
+      final hours = int.tryParse(parts[0]) ?? 0;
+      final minutes = int.tryParse(parts[1]) ?? 0;
+      return hours * 60 + minutes;
+    } else if (parts.length == 1) {
+      // Just hours
+      final hours = int.tryParse(parts[0]) ?? 0;
+      return hours * 60;
+    }
+    
+    return 0;
+  }
+
+  List<MatchModel> get _filteredMatches {
+    final allMatches = _repository.matchesNotifier.value;
+    return allMatches.where((match) {
+      if (_filterCity != null && _filterCity!.isNotEmpty) {
+        if (!match.cityDistrict.toLowerCase().contains(_filterCity!.toLowerCase())) {
+          return false;
+        }
+      }
+      if (_filterDistrict != null && _filterDistrict!.isNotEmpty) {
+        if (!match.cityDistrict.toLowerCase().contains(_filterDistrict!.toLowerCase())) {
+          return false;
+        }
+      }
+      if (_filterTeamName != null && _filterTeamName!.isNotEmpty) {
+        if (!match.matchTitle.toLowerCase().contains(_filterTeamName!.toLowerCase()) &&
+            !match.playingTeam.toLowerCase().contains(_filterTeamName!.toLowerCase())) {
+          return false;
+        }
+      }
+      if (_filterTime != null && _filterTime!.isNotEmpty) {
+        if (!_isTimeIntervalInside(match.timeRange, _filterTime!)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  void _showFilterDialog() {
+    final cityController = TextEditingController(text: _filterCity ?? '');
+    final districtController = TextEditingController(text: _filterDistrict ?? '');
+    final teamController = TextEditingController(text: _filterTeamName ?? '');
+    final timeController = TextEditingController(text: _filterTime ?? '');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Filter Matches'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: cityController,
+                decoration: const InputDecoration(
+                  labelText: 'City',
+                  hintText: 'Enter city name',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: districtController,
+                decoration: const InputDecoration(
+                  labelText: 'District',
+                  hintText: 'Enter district name',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: teamController,
+                decoration: const InputDecoration(
+                  labelText: 'Team Name',
+                  hintText: 'Enter team name',
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: timeController,
+                decoration: const InputDecoration(
+                  labelText: 'Time',
+                  hintText: 'Enter time range (e.g., 12.00-15.00)',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _filterCity = null;
+                _filterDistrict = null;
+                _filterTeamName = null;
+                _filterTime = null;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Clear'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                _filterCity = cityController.text.trim().isEmpty
+                    ? null
+                    : cityController.text.trim();
+                _filterDistrict = districtController.text.trim().isEmpty
+                    ? null
+                    : districtController.text.trim();
+                _filterTeamName = teamController.text.trim().isEmpty
+                    ? null
+                    : teamController.text.trim();
+                _filterTime = timeController.text.trim().isEmpty
+                    ? null
+                    : timeController.text.trim();
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('Apply'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,9 +234,7 @@ class MatchesScreen extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            onPressed: () {
-                              // to be filled: add filters for matches
-                            },
+                            onPressed: _showFilterDialog,
                             icon: const Icon(
                               Icons.filter_list,
                               color: Color(0xFF4B5775),
@@ -100,7 +286,8 @@ class MatchesScreen extends StatelessWidget {
                       child: ValueListenableBuilder<List<MatchModel>>(
                         valueListenable: _repository.matchesNotifier,
                         builder: (context, matches, _) {
-                          if (matches.isEmpty) {
+                          final filtered = _filteredMatches;
+                          if (filtered.isEmpty) {
                             return const Center(
                               child: Text(
                                 'No matches available',
@@ -109,11 +296,11 @@ class MatchesScreen extends StatelessWidget {
                             );
                           }
                           return ListView.separated(
-                            itemCount: matches.length,
+                            itemCount: filtered.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: kSmallPadding),
                             itemBuilder: (context, index) {
-                              final match = matches[index];
+                              final match = filtered[index];
                               return Dismissible(
                                 key: ValueKey(match.id),
                                 direction: DismissDirection.endToStart,
