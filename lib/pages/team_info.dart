@@ -1,49 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../models/team_model.dart';
 import '../utils/colors.dart';
-import '../widgets/app_bottom_nav.dart';
+// import 'teams_screen.dart'; // Removed unused import
 
 class TeamInfoPage extends StatelessWidget {
-  const TeamInfoPage({super.key});
+  const TeamInfoPage({super.key, required this.team});
 
-  // Şimdilik DEMO veri – sadece UI için
-  List<Map<String, dynamic>> get _players => const [
-    {
-      'name': 'Jonathan Patterson',
-      'age': 28,
-      'position': 'FW',
-      'title': 'Captain',
-    },
-    {
-      'name': 'Alex Smith',
-      'age': 25,
-      'position': 'MF',
-      'title': '',
-    },
-    {
-      'name': 'David Johnson',
-      'age': 23,
-      'position': 'DF',
-      'title': '',
-    },
-  ];
-
-  List<String> get _previousMatches => const ['3-1', '0-0', '1-2'];
+  final TeamModel team;
 
   Color _matchColor(String result) {
-    // berabere
-    if (result == '0-0' ||
-        result.endsWith('1-1') ||
-        result.endsWith('2-2')) {
+    if (result == '0-0' || result.endsWith('1-1') || result.endsWith('2-2')) {
       return Colors.blue;
     }
-    // kazandı
-    if (result.endsWith('3-1') ||
-        result.endsWith('2-0') ||
-        result.endsWith('1-0')) {
+    if (result.endsWith('3-1') || result.endsWith('2-0') || result.endsWith('1-0')) {
       return Colors.green;
     }
-    // kaybetti
     return Colors.red;
   }
 
@@ -56,21 +28,16 @@ class TeamInfoPage extends StatelessWidget {
           children: [
             const _TopBar(),
             const SizedBox(height: 16),
-
-            // Takım adı + şehir – şimdilik sabit
-            const Text(
-              'Eagles • Ankara/Polatlı',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              '${team.name} • ${team.city}/${team.district}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 16),
-
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  // Oyuncu tablosu
                   Table(
                     border: TableBorder.all(color: Colors.grey.shade300),
                     columnWidths: const {
@@ -80,42 +47,39 @@ class TeamInfoPage extends StatelessWidget {
                       3: FlexColumnWidth(1),
                     },
                     children: [
-                      const TableRow(
-                        decoration: BoxDecoration(
+                      TableRow(
+                        decoration: const BoxDecoration(
                           color: Color(0xFFDFF0D8),
                         ),
-                        children: [
+                        children: const [
                           _TableHeader('Name/Surname'),
                           _TableHeader('Age'),
                           _TableHeader('Position'),
                           _TableHeader('Title'),
                         ],
                       ),
-                      ..._players.map(
-                            (player) => TableRow(
+                      ...team.players.map(
+                        (player) => TableRow(
                           children: [
-                            _TableCell(player['name'] as String),
-                            _TableCell('${player['age']}'),
-                            _TableCell(player['position'] as String),
-                            _TableCell(player['title'] as String),
+                            _TableCell(player.name),
+                            _TableCell(player.age),
+                            _TableCell(player.position),
+                            _TableCell(player.title),
                           ],
                         ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 24),
-
                   const Text(
                     'Previous Matches',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: _previousMatches.map((match) {
+                    children: team.previousMatches.map((match) {
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 6),
                         padding: const EdgeInsets.symmetric(
@@ -137,8 +101,7 @@ class TeamInfoPage extends StatelessWidget {
                           children: [
                             Text(
                               match,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
                             Container(
@@ -157,8 +120,7 @@ class TeamInfoPage extends StatelessWidget {
                 ],
               ),
             ),
-
-            const AppBottomNavBar(),
+            const TeamInfoBottomBar(),
           ],
         ),
       ),
@@ -235,6 +197,116 @@ class _TableCell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Text(text),
+    );
+  }
+}
+
+// Custom Bottom Bar for Team Info Page
+class TeamInfoBottomBar extends StatelessWidget {
+  const TeamInfoBottomBar({super.key});
+
+  void _showPlaceholderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Coming soon'),
+        content: const Text('This navigation destination is not ready yet.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _goHome(BuildContext context) {
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+      decoration: const BoxDecoration(
+        color: kAppGreen,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _BottomItem(
+            imagePath: 'lib/images/home_logo.png',
+            label: 'Home',
+            isActive: false,
+            onTap: () => _goHome(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/myteam_logo.png',
+            label: 'My Team',
+            isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/search_logo.png',
+            label: 'Search',
+            isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/myprofile_logo.png',
+            label: 'MyProfile',
+            isActive: false,
+            onTap: () => Navigator.of(context).pushNamed('/my-player'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final String imagePath;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.imagePath,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color textColor = Colors.white;
+
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 34,
+            height: 34,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

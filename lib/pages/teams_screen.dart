@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/team_repository.dart';
 import '../models/team_model.dart';
-import '../utils/colors.dart';
+import 'team_info.dart';
 
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});
@@ -12,6 +12,15 @@ class TeamsScreen extends StatefulWidget {
 
 class _TeamsScreenState extends State<TeamsScreen> {
   final TeamRepository _repository = TeamRepository.instance;
+  String selectedCity = 'All';
+
+  // Correctly filtering using the static list from repository
+  List<TeamModel> get _filteredTeams {
+    if (selectedCity == 'All') return _repository.teams;
+    return _repository.teams
+        .where((team) => team.city.toLowerCase() == selectedCity.toLowerCase())
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,21 +55,18 @@ class _TeamsScreenState extends State<TeamsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      // TODO: Implement filter functionality
-                      _showFilterDialog();
-                    },
-                    icon: const Icon(
-                      Icons.filter_alt_outlined,
-                      color: Colors.black,
+                  ElevatedButton.icon(
+                    onPressed: _showFilterDialog,
+                    icon: const Icon(Icons.filter_list, color: Colors.black),
+                    label: Text(
+                      'Filter — $selectedCity',
+                      style: const TextStyle(color: Colors.black),
                     ),
-                    label: const Text(
-                      'Filter',
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.black,
-                        fontWeight: FontWeight.w500,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFA8C686),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
                     ),
                   ),
@@ -114,9 +120,16 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
             // Teams list
             Expanded(
-              child: ValueListenableBuilder<List<TeamModel>>(
-                valueListenable: _repository.teamsNotifier,
-                builder: (context, teams, _) {
+              child: Builder(
+                builder: (context) {
+                  // Use the local filtered list instead of ValueListenableBuilder
+                  // because TeamRepository does not expose a notifier.
+                  final teams = _filteredTeams;
+
+                  if (teams.isEmpty) {
+                    return const Center(child: Text("No teams found"));
+                  }
+
                   return Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
@@ -138,8 +151,11 @@ class _TeamsScreenState extends State<TeamsScreen> {
                         final team = teams[index];
                         return InkWell(
                           onTap: () {
-                            // Navigate to team details
-                            _showTeamDetails(team);
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => TeamInfoPage(team: team),
+                              ),
+                            );
                           },
                           child: Container(
                             color: index % 2 == 0
@@ -161,7 +177,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                                       ),
                                     ),
                                     child: Text(
-                                      team.cityDistrict,
+                                      '${team.city} / ${team.district}',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black87,
@@ -174,7 +190,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                                   child: Padding(
                                     padding: const EdgeInsets.all(16),
                                     child: Text(
-                                      team.teamName,
+                                      team.name,
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black87,
@@ -227,7 +243,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
                       icon: Icons.person,
                       label: 'MyProfile',
                       onTap: () {
-                        // TODO: Navigate to profile screen
+                        Navigator.of(context).pushNamed('/my-player');
                       },
                     ),
                   ],
@@ -271,74 +287,35 @@ class _TeamsScreenState extends State<TeamsScreen> {
   }
 
   void _showFilterDialog() {
+    final cities = <String>{'All', ..._repository.teams.map((team) => team.city)};
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter Teams'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'City',
-                hintText: 'Enter city name',
-              ),
-              onSubmitted: (value) {
-                // TODO: Implement filter logic
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              decoration: const InputDecoration(
-                labelText: 'District',
-                hintText: 'Enter district name',
-              ),
-              onSubmitted: (value) {
-                // TODO: Implement filter logic
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Apply filters
-              Navigator.pop(context);
+      builder: (_) {
+        String tempSelection = selectedCity;
+        return AlertDialog(
+          title: const Text('Filter by City'),
+          content: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: cities.map((city) {
+                  final isSelected = tempSelection == city;
+                  return ChoiceChip(
+                    label: Text(city),
+                    selected: isSelected,
+                    onSelected: (_) {
+                      setStateDialog(() => tempSelection = city);
+                      Navigator.pop(context);
+                      setState(() => selectedCity = city);
+                    },
+                  );
+                }).toList(),
+              );
             },
-            child: const Text('Apply'),
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showTeamDetails(TeamModel team) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(team.teamName),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('ID: ${team.id}'),
-            const SizedBox(height: 8),
-            Text('Location: ${team.cityDistrict}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
