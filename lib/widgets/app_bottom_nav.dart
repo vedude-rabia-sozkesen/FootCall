@@ -23,7 +23,11 @@ class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({super.key});
 
   void _goHome(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+    Navigator.of(context).pushNamedAndRemoveUntil('/matches', (route) => false);
+  }
+
+  void _goTeams(BuildContext context) {
+    Navigator.of(context).pushNamed('/teams');
   }
 
   Widget _buildItem({
@@ -68,7 +72,7 @@ class AppBottomNavBar extends StatelessWidget {
             context: context,
             icon: Icons.group_outlined,
             label: 'My Team',
-            onTap: () => _showPlaceholderDialog(context),
+            onTap: () => _goTeams(context),
           ),
           _buildItem(
             context: context,

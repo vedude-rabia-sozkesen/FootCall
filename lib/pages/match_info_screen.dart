@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../data/match_repository.dart';
 import '../data/request_repository.dart';
+import '../data/team_repository.dart';
 import '../models/match_model.dart';
+import 'team_info_page.dart';
 import '../utils/constants.dart';
 import '../utils/styles.dart';
 import '../widgets/app_bottom_nav.dart';
@@ -67,7 +69,23 @@ class MatchInfoScreen extends StatelessWidget {
                                 ),
                               ),
                               onPressed: () {
-                                // to be filled: navigate to team info page
+                                final team = TeamRepository.instance
+                                    .findByName(match.playingTeam);
+                                if (team == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'No team info found for ${match.playingTeam}.',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => TeamInfoPage(team: team),
+                                  ),
+                                );
                               },
                               child: const Text(
                                 'View Team Info',
