@@ -12,6 +12,7 @@ import 'pages/player_request_screen.dart';
 import 'pages/teams_screen.dart';
 import 'pages/player_info_screen.dart';
 import 'pages/my_player.dart';
+import 'pages/players_screen.dart';
 import 'utils/colors.dart';
 
 void main() {
@@ -46,6 +47,7 @@ class MyApp extends StatelessWidget {
         '/teams': (context) => const TeamsScreen(),
         '/player-info': (context) => const PlayerInfoScreen(),
         '/my-player': (context) => const MyPlayerPage(),
+        '/players': (context) => const PlayersScreen(),
       },
     );
   }
@@ -127,6 +129,21 @@ class MainMenuScreen extends StatelessWidget {
                     Navigator.of(context).pushNamed('/player-info', arguments: '34731');
                   },
                   child: const Text('Player Info Screen'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 260,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAppGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/players');
+                  },
+                  child: const Text('Players Screen'),
                 ),
               ),
             ],
