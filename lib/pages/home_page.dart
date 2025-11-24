@@ -441,7 +441,8 @@ class _HomeBottomBar extends StatelessWidget {
             imagePath: 'lib/images/myteam_logo.png',
             label: 'My Team',
             isActive: false,
-            onTap: () => _showPlaceholderDialog(context),
+            // Navigate to MyTeamPage
+            onTap: () => Navigator.of(context).pushNamed('/my-team'),
           ),
           _BottomItem(
             imagePath: 'lib/images/search_logo.png',
