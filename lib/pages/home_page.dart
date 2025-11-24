@@ -453,7 +453,8 @@ class _HomeBottomBar extends StatelessWidget {
             imagePath: 'lib/images/myprofile_logo.png',
             label: 'MyProfile',
             isActive: false,
-            onTap: () => _showPlaceholderDialog(context),
+            // Navigate to MyPlayerPage instead of placeholder
+            onTap: () => Navigator.of(context).pushNamed('/my-player'),
           ),
         ],
       ),

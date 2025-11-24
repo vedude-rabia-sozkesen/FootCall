@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../data/player_repository.dart';
 import '../models/player_model.dart';
+import '../utils/colors.dart';
+// Replaced custom nav items with standard shared bottom bar or copy of it
 
 class PlayerInfoScreen extends StatefulWidget {
   const PlayerInfoScreen({super.key});
@@ -386,48 +388,8 @@ class _PlayerInfoScreenState extends State<PlayerInfoScreen> {
                     ),
                   ),
 
-                  // Bottom Navigation
-                  Container(
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF6B8E4E),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildNavItem(
-                            icon: Icons.home,
-                            label: 'Home',
-                            onTap: () =>
-                                Navigator.of(context).pushNamed('/matches'),
-                          ),
-                          _buildNavItem(
-                            icon: Icons.groups,
-                            label: 'My Team',
-                            onTap: () =>
-                                Navigator.of(context).pushNamed('/teams'),
-                          ),
-                          _buildNavItem(
-                            icon: Icons.search,
-                            label: 'Search',
-                            onTap: () {
-                              // TODO: Navigate to search screen
-                            },
-                          ),
-                          _buildNavItem(
-                            icon: Icons.person,
-                            label: 'MyProfile',
-                            onTap: () {
-                              // TODO: Navigate to profile screen
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // Bottom Navigation (Custom implementation)
+                  const PlayerInfoBottomBar(),
                 ],
               );
             },
@@ -464,36 +426,6 @@ class _PlayerInfoScreenState extends State<PlayerInfoScreen> {
     );
   }
 
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isActive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showAddPlayerDialog(PlayerModel player) {
     showDialog(
       context: context,
@@ -519,6 +451,116 @@ class _PlayerInfoScreenState extends State<PlayerInfoScreen> {
               );
             },
             child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Custom Bottom Bar for Player Info Page
+class PlayerInfoBottomBar extends StatelessWidget {
+  const PlayerInfoBottomBar({super.key});
+
+  void _showPlaceholderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Coming soon'),
+        content: const Text('This navigation destination is not ready yet.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _goHome(BuildContext context) {
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+      decoration: const BoxDecoration(
+        color: kAppGreen,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _BottomItem(
+            imagePath: 'lib/images/home_logo.png',
+            label: 'Home',
+            isActive: false,
+            onTap: () => _goHome(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/myteam_logo.png',
+            label: 'My Team',
+            isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/search_logo.png',
+            label: 'Search',
+            isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
+          ),
+          _BottomItem(
+            imagePath: 'lib/images/myprofile_logo.png',
+            label: 'MyProfile',
+            isActive: false,
+            onTap: () => Navigator.of(context).pushNamed('/my-player'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final String imagePath;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.imagePath,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color textColor = Colors.white;
+
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 34,
+            height: 34,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+            ),
           ),
         ],
       ),
