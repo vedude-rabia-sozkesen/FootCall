@@ -10,6 +10,7 @@ import 'pages/match_info_screen.dart';
 import 'pages/matches_screen.dart';
 import 'pages/player_request_screen.dart';
 import 'pages/teams_screen.dart';
+import 'pages/team_info.dart';
 import 'pages/player_info_screen.dart';
 import 'pages/my_player.dart'; // Added import
 import 'utils/colors.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/admin': (context) => const AdminPanelScreen(),
         '/requests': (context) => const PlayerRequestsScreen(),
         '/teams': (context) => const TeamsScreen(),
+        '/team-info': (context) => const TeamInfoPage(),
         '/player-info': (context) => const PlayerInfoScreen(),
         '/my-player': (context) => const MyPlayerPage(), // Added route
       },

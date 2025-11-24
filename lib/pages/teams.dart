@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../data/team_repository.dart';
-import '../models/team_model.dart';
 import '../utils/colors.dart';
 import '../widgets/app_bottom_nav.dart';
-import 'team_info_page.dart';
+import 'team_info.dart';
 
 class TeamsPage extends StatefulWidget {
   const TeamsPage({super.key});
@@ -14,18 +12,42 @@ class TeamsPage extends StatefulWidget {
 }
 
 class _TeamsPageState extends State<TeamsPage> {
-  final TeamRepository _repository = TeamRepository.instance;
+  // Şimdilik DEMO takım listesi – sadece UI için
+  final List<Map<String, String>> _teams = const [
+    {
+      'city': 'Ankara',
+      'district': 'Polatlı',
+      'name': 'Eagles',
+    },
+    {
+      'city': 'İzmir',
+      'district': 'Bornova',
+      'name': 'Lions',
+    },
+    {
+      'city': 'İstanbul',
+      'district': 'Kadıköy',
+      'name': 'Birds',
+    },
+  ];
+
   String selectedCity = 'All';
 
-  List<TeamModel> get _filteredTeams {
-    if (selectedCity == 'All') return _repository.teams;
-    return _repository.teams
-        .where((team) => team.city.toLowerCase() == selectedCity.toLowerCase())
+  List<Map<String, String>> get _filteredTeams {
+    if (selectedCity == 'All') return _teams;
+    return _teams
+        .where((team) =>
+    (team['city'] ?? '').toLowerCase() ==
+        selectedCity.toLowerCase())
         .toList();
   }
 
   void _showFilterDialog() {
-    final cities = <String>{'All', ..._repository.teams.map((team) => team.city)};
+    final cities = <String>{
+      'All',
+      ..._teams.map((team) => team['city'] ?? 'Unknown'),
+    };
+
     showDialog(
       context: context,
       builder: (_) {
@@ -65,8 +87,11 @@ class _TeamsPageState extends State<TeamsPage> {
         child: Column(
           children: [
             const _TopBar(title: 'Teams'),
+
+            // Filter butonu
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ElevatedButton.icon(
                 onPressed: _showFilterDialog,
                 icon: const Icon(Icons.filter_list),
@@ -77,6 +102,8 @@ class _TeamsPageState extends State<TeamsPage> {
                 ),
               ),
             ),
+
+            // Başlık satırı
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
@@ -98,16 +125,23 @@ class _TeamsPageState extends State<TeamsPage> {
               ),
             ),
             const SizedBox(height: 8),
+
+            // Takım listesi
             Expanded(
               child: ListView.builder(
                 itemCount: _filteredTeams.length,
                 itemBuilder: (context, index) {
                   final team = _filteredTeams[index];
+                  final city = team['city'] ?? '';
+                  final district = team['district'] ?? '';
+                  final name = team['name'] ?? '';
+
                   return GestureDetector(
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => TeamInfoPage(team: team),
+                          // TeamInfoPage artık parametresiz versiyon
+                          builder: (_) => const TeamInfoPage(),
                         ),
                       );
                     },
@@ -132,10 +166,10 @@ class _TeamsPageState extends State<TeamsPage> {
                         children: [
                           const Icon(Icons.location_on, color: kAppGreen),
                           const SizedBox(width: 10),
-                          Text('${team.city} / ${team.district}'),
+                          Text('$city / $district'),
                           const Spacer(),
                           Text(
-                            team.name,
+                            name,
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                             ),
@@ -147,6 +181,7 @@ class _TeamsPageState extends State<TeamsPage> {
                 },
               ),
             ),
+
             const AppBottomNavBar(),
           ],
         ),
@@ -194,7 +229,7 @@ class _TopBar extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
+      ),
+    );
+  }
 }

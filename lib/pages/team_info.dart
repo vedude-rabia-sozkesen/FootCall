@@ -1,21 +1,49 @@
 import 'package:flutter/material.dart';
 
-import '../models/team_model.dart';
 import '../utils/colors.dart';
 import '../widgets/app_bottom_nav.dart';
 
 class TeamInfoPage extends StatelessWidget {
-  const TeamInfoPage({super.key, required this.team});
+  const TeamInfoPage({super.key});
 
-  final TeamModel team;
+  // Şimdilik DEMO veri – sadece UI için
+  List<Map<String, dynamic>> get _players => const [
+    {
+      'name': 'Jonathan Patterson',
+      'age': 28,
+      'position': 'FW',
+      'title': 'Captain',
+    },
+    {
+      'name': 'Alex Smith',
+      'age': 25,
+      'position': 'MF',
+      'title': '',
+    },
+    {
+      'name': 'David Johnson',
+      'age': 23,
+      'position': 'DF',
+      'title': '',
+    },
+  ];
+
+  List<String> get _previousMatches => const ['3-1', '0-0', '1-2'];
 
   Color _matchColor(String result) {
-    if (result == '0-0' || result.endsWith('1-1') || result.endsWith('2-2')) {
+    // berabere
+    if (result == '0-0' ||
+        result.endsWith('1-1') ||
+        result.endsWith('2-2')) {
       return Colors.blue;
     }
-    if (result.endsWith('3-1') || result.endsWith('2-0') || result.endsWith('1-0')) {
+    // kazandı
+    if (result.endsWith('3-1') ||
+        result.endsWith('2-0') ||
+        result.endsWith('1-0')) {
       return Colors.green;
     }
+    // kaybetti
     return Colors.red;
   }
 
@@ -28,16 +56,21 @@ class TeamInfoPage extends StatelessWidget {
           children: [
             const _TopBar(),
             const SizedBox(height: 16),
-            Text(
-              '${team.name} • ${team.city}/${team.district}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+
+            // Takım adı + şehir – şimdilik sabit
+            const Text(
+              'Eagles • Ankara/Polatlı',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 16),
+
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
+                  // Oyuncu tablosu
                   Table(
                     border: TableBorder.all(color: Colors.grey.shade300),
                     columnWidths: const {
@@ -47,39 +80,42 @@ class TeamInfoPage extends StatelessWidget {
                       3: FlexColumnWidth(1),
                     },
                     children: [
-                      TableRow(
-                        decoration: const BoxDecoration(
+                      const TableRow(
+                        decoration: BoxDecoration(
                           color: Color(0xFFDFF0D8),
                         ),
-                        children: const [
+                        children: [
                           _TableHeader('Name/Surname'),
                           _TableHeader('Age'),
                           _TableHeader('Position'),
                           _TableHeader('Title'),
                         ],
                       ),
-                      ...team.players.map(
-                        (player) => TableRow(
+                      ..._players.map(
+                            (player) => TableRow(
                           children: [
-                            _TableCell(player.name),
-                            _TableCell(player.age),
-                            _TableCell(player.position),
-                            _TableCell(player.title),
+                            _TableCell(player['name'] as String),
+                            _TableCell('${player['age']}'),
+                            _TableCell(player['position'] as String),
+                            _TableCell(player['title'] as String),
                           ],
                         ),
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 24),
+
                   const Text(
                     'Previous Matches',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: team.previousMatches.map((match) {
+                    children: _previousMatches.map((match) {
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 6),
                         padding: const EdgeInsets.symmetric(
@@ -101,7 +137,8 @@ class TeamInfoPage extends StatelessWidget {
                           children: [
                             Text(
                               match,
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 6),
                             Container(
@@ -120,6 +157,7 @@ class TeamInfoPage extends StatelessWidget {
                 ],
               ),
             ),
+
             const AppBottomNavBar(),
           ],
         ),
@@ -197,6 +235,6 @@ class _TableCell extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Text(text),
-    );
-  }
+    );
+  }
 }
