@@ -1,46 +1,7 @@
 import 'package:flutter/material.dart';
 
-const kAppGreen = Color(0xFF4C8F3A);
-const kAppGreenLight = Color(0xFF7BC567);
-
-
-class AppBottomNavBar extends StatelessWidget {
-  const AppBottomNavBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: kAppGreen,
-      currentIndex: 2, // 0: Home, 1: My Team, 2: Search, 3: MyProfile
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white,
-      showUnselectedLabels: true,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_outlined),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group_outlined),
-          label: 'My Team',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.search),
-          label: 'Search',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_outline),
-          label: 'MyProfile',
-        ),
-      ],
-      onTap: (index) {
-        
-      },
-    );
-  }
-}
-
+import '../utils/colors.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class SearchPage extends StatelessWidget {
   const SearchPage({super.key});
@@ -61,26 +22,32 @@ class SearchPage extends StatelessWidget {
                   _SearchActionButton(
                     label: 'List Teams',
                     onTap: () {
-                      
+                      Navigator.of(context).pushNamed('/teams');
                     },
                   ),
                   const SizedBox(height: 12),
                   _SearchActionButton(
                     label: 'List Matches',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.of(context).pushNamed('/matches');
+                    },
                   ),
                   const SizedBox(height: 12),
                   _SearchActionButton(
                     label: 'List Players',
-                    onTap: () {},
+                    onTap: () {
+                      // Navigator.of(context).pushNamed('/players'); // Not implemented yet
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Players list not ready yet")));
+                    },
                   ),
                 ],
               ),
             ),
-            const AppBottomNavBar(),
           ],
         ),
       ),
+      // Use shared bottom bar with activeIndex = 2 (Search)
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 2), 
     );
   }
 }

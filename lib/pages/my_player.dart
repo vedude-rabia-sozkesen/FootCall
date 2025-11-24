@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
-import 'home_page.dart'; // Import Home Page to access _HomeBottomBar logic or similar if needed
-// But since _HomeBottomBar is private in home_page.dart, we should probably extract it or copy it.
-// For now, I will re-implement the bottom bar here or better yet, create a shared widget if possible.
-// Given the instructions, I will copy the bottom bar structure.
+import '../widgets/app_bottom_nav.dart';
 
 class MyPlayerPage extends StatelessWidget {
   final bool isAdmin;
@@ -67,8 +64,8 @@ class MyPlayerPage extends StatelessWidget {
           ],
         ),
       ),
-      // Using a custom Bottom Bar similar to Home Page but with 'MyProfile' active
-      bottomNavigationBar: const MyPlayerBottomBar(), 
+      // Using shared Bottom Bar
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 3), 
     );
   }
 }
@@ -254,116 +251,6 @@ class _InfoRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// Custom Bottom Bar for MyPlayer Page
-class MyPlayerBottomBar extends StatelessWidget {
-  const MyPlayerBottomBar({super.key});
-
-  void _showPlaceholderDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Coming soon'),
-        content: const Text('This navigation destination is not ready yet.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _goHome(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
-      decoration: const BoxDecoration(
-        color: kAppGreen,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _BottomItem(
-            imagePath: 'lib/images/home_logo.png',
-            label: 'Home',
-            isActive: false,
-            onTap: () => _goHome(context),
-          ),
-          _BottomItem(
-            imagePath: 'lib/images/myteam_logo.png',
-            label: 'My Team',
-            isActive: false,
-            onTap: () => _showPlaceholderDialog(context),
-          ),
-          _BottomItem(
-            imagePath: 'lib/images/search_logo.png',
-            label: 'Search',
-            isActive: false,
-            onTap: () => _showPlaceholderDialog(context),
-          ),
-          _BottomItem(
-            imagePath: 'lib/images/myprofile_logo.png',
-            label: 'MyProfile',
-            isActive: true, // Active here
-            onTap: () {}, // Already on this page
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomItem extends StatelessWidget {
-  final String imagePath;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _BottomItem({
-    required this.imagePath,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const Color textColor = Colors.white;
-
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 34,
-            height: 34,
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.contain,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 15,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

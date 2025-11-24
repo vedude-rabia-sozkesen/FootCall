@@ -13,6 +13,8 @@ import 'pages/teams_screen.dart';
 import 'pages/player_info_screen.dart';
 import 'pages/my_player.dart';
 import 'pages/my_team_page.dart';
+import 'pages/search_screen.dart';
+import 'pages/players_screen.dart';
 import 'utils/colors.dart';
 
 void main() {
@@ -48,6 +50,8 @@ class MyApp extends StatelessWidget {
         '/player-info': (context) => const PlayerInfoScreen(),
         '/my-player': (context) => const MyPlayerPage(),
         '/my-team': (context) => MyTeamPage(),
+        '/search': (context) => const SearchPage(),
+        '/players': (context) => const PlayersScreen(),
       },
     );
   }

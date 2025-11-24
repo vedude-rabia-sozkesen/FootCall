@@ -32,8 +32,8 @@ class AppBottomNavBar extends StatelessWidget {
       case 1: // My Team
         Navigator.of(context).pushNamed('/my-team');
         break;
-      case 2: // Search
-        _showPlaceholderDialog(context);
+      case 2: // Search (Search Screen)
+        Navigator.of(context).pushNamed('/search');
         break;
       case 3: // My Profile
         Navigator.of(context).pushNamed('/my-player');
