@@ -186,7 +186,7 @@ class MyTeamPage extends StatelessWidget {
         ),
       ),
 
-      bottomNavigationBar: const AppBottomNavBar(),
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
     );
   }
 }

@@ -1,91 +1,125 @@
 import 'package:flutter/material.dart';
-
 import '../utils/colors.dart';
-import '../utils/styles.dart';
-
-void _showPlaceholderDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Coming soon'),
-      content: const Text('This navigation destination is not ready yet.'),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
-}
 
 class AppBottomNavBar extends StatelessWidget {
-  const AppBottomNavBar({super.key});
+  final int activeIndex;
 
-  // Change: Home now navigates to the real Home Page ('/home') instead of '/'
-  void _goHome(BuildContext context) {
-    Navigator.of(context).pushNamedAndRemoveUntil('/matches', (route) => false);
-  }
+  const AppBottomNavBar({super.key, required this.activeIndex});
 
-  void _goTeams(BuildContext context) {
-    _showPlaceholderDialog(context);
-  }
-
-  Widget _buildItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: kBottomNavTextStyle,
+  void _showPlaceholderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Coming soon'),
+        content: const Text('This navigation destination is not ready yet.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
 
+  void _onTap(BuildContext context, int index) {
+    if (index == activeIndex) return;
+
+    switch (index) {
+      case 0: // Home
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        break;
+      case 1: // My Team
+        Navigator.of(context).pushNamed('/my-team');
+        break;
+      case 2: // Search
+        _showPlaceholderDialog(context);
+        break;
+      case 3: // My Profile
+        Navigator.of(context).pushNamed('/my-player');
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
-      color: kAppGreen,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+      decoration: const BoxDecoration(
+        color: kAppGreen,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildItem(
-            context: context,
-            icon: Icons.home_outlined,
+          _BottomItem(
+            imagePath: 'lib/images/home_logo.png',
             label: 'Home',
-            onTap: () => _goHome(context),
+            isActive: activeIndex == 0,
+            onTap: () => _onTap(context, 0),
           ),
-          _buildItem(
-            context: context,
-            icon: Icons.group_outlined,
+          _BottomItem(
+            imagePath: 'lib/images/myteam_logo.png',
             label: 'My Team',
-            onTap: () => _goTeams(context),
+            isActive: activeIndex == 1,
+            onTap: () => _onTap(context, 1),
           ),
-          _buildItem(
-            context: context,
-            icon: Icons.search,
+          _BottomItem(
+            imagePath: 'lib/images/search_logo.png',
             label: 'Search',
-            onTap: () => _showPlaceholderDialog(context),
+            isActive: activeIndex == 2,
+            onTap: () => _onTap(context, 2),
           ),
-          _buildItem(
-            context: context,
-            icon: Icons.person_outline,
+          _BottomItem(
+            imagePath: 'lib/images/myprofile_logo.png',
             label: 'MyProfile',
-            onTap: () => _showPlaceholderDialog(context),
+            isActive: activeIndex == 3,
+            onTap: () => _onTap(context, 3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomItem extends StatelessWidget {
+  final String imagePath;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _BottomItem({
+    required this.imagePath,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const Color textColor = Colors.white;
+
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 34,
+            height: 34,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+            ),
           ),
         ],
       ),
