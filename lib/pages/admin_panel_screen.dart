@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../data/request_repository.dart';
+import '../models/player_join_request.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
+import '../widgets/app_bottom_nav.dart';
 
 void _showNotImplemented(BuildContext context) {
   showDialog(
@@ -20,6 +23,8 @@ void _showNotImplemented(BuildContext context) {
 
 class AdminPanelScreen extends StatelessWidget {
   const AdminPanelScreen({super.key});
+
+  RequestRepository get _repo => RequestRepository.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +69,28 @@ class AdminPanelScreen extends StatelessWidget {
                   children: [
                     const _SectionTitle('Player Requests'),
                     const SizedBox(height: 8),
-                    const _PlayerRequestCard(),
+                    ValueListenableBuilder<List<PlayerJoinRequest>>(
+                      valueListenable: _repo.playerRequestsNotifier,
+                      builder: (context, requests, _) {
+                        if (requests.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              'No player requests yet. When players join your match, they will appear here.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (final req in requests) ...[
+                              _PlayerRequestCard(request: req),
+                              const SizedBox(height: 12),
+                            ]
+                          ],
+                        );
+                      },
+                    ),
                     const SizedBox(height: 24),
                     const _SectionTitle('Player Responses'),
                     const SizedBox(height: 8),
@@ -80,7 +106,7 @@ class AdminPanelScreen extends StatelessWidget {
               ),
             ),
 
-            const _BottomNavBar(),
+            const AppBottomNavBar(),
           ],
         ),
       ),
@@ -104,7 +130,9 @@ class _SectionTitle extends StatelessWidget {
 
 /// Player Requests card – avatar + name + red X + green ✓
 class _PlayerRequestCard extends StatelessWidget {
-  const _PlayerRequestCard();
+  const _PlayerRequestCard({required this.request});
+
+  final PlayerJoinRequest request;
 
   @override
   Widget build(BuildContext context) {
@@ -125,10 +153,21 @@ class _PlayerRequestCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              'Ahmet',
-              style: kCardTitleStyle,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  request.playerName,
+                  style: kCardTitleStyle,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  request.matchTitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
             ),
           ),
           Row(
@@ -278,72 +317,3 @@ class _CircleIconButton extends StatelessWidget {
   }
 }
 
-// BOTTOM NAV BAR – Fixed to have named routes like PlayerRequestsScreen
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar();
-
-  void _goHome(BuildContext context) {
-    // Navigate to Home using named route '/'
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-  }
-
-  Widget _buildItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: kBottomNavTextStyle,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      color: kAppGreen,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildItem(
-            context: context,
-            icon: Icons.home_outlined,
-            label: 'Home',
-            onTap: () => _goHome(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.group_outlined,
-            label: 'My Team',
-            onTap: () => _showNotImplemented(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.search,
-            label: 'Search',
-            onTap: () => _showNotImplemented(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.person_outline,
-            label: 'MyProfile',
-            onTap: () => _showNotImplemented(context),
-          ),
-        ],
-      ),
-    );
-  }
-}

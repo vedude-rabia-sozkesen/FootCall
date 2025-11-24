@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import '../data/request_repository.dart';
+import '../models/team_request.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
+import '../widgets/app_bottom_nav.dart';
 
 void _showNotImplemented(BuildContext context) {
   showDialog(
@@ -21,6 +24,8 @@ void _showNotImplemented(BuildContext context) {
 class PlayerRequestsScreen extends StatelessWidget {
   const PlayerRequestsScreen({super.key});
 
+  RequestRepository get _repo => RequestRepository.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +33,6 @@ class PlayerRequestsScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Top green header with "Requests"
             Container(
               color: kAppGreen,
               padding: const EdgeInsets.only(
@@ -39,7 +43,6 @@ class PlayerRequestsScreen extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  // Back button removed
                   const SizedBox(width: 8),
                   Expanded(
                     child: Container(
@@ -59,29 +62,46 @@ class PlayerRequestsScreen extends StatelessWidget {
                 ],
               ),
             ),
-
-            // CONTENT
             Expanded(
               child: SingleChildScrollView(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    _SectionTitle('Team Requests'),
-                    SizedBox(height: 8),
-                    _TeamRequestCard(),
-                    SizedBox(height: 8),
-                    _TeamRequestCard(),
-                    SizedBox(height: 24),
-                    _SectionTitle('Team Responses'),
-                    SizedBox(height: 8),
-                    _TeamResponseCard(
+                  children: [
+                    const _SectionTitle('Team Requests'),
+                    const SizedBox(height: 8),
+                    ValueListenableBuilder<List<TeamRequest>>(
+                      valueListenable: _repo.teamRequestsNotifier,
+                      builder: (context, requests, _) {
+                        if (requests.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: Text(
+                              'No team requests yet. Join a match as an admin to send one.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          );
+                        }
+                        return Column(
+                          children: [
+                            for (final req in requests) ...[
+                              _TeamRequestCard(request: req),
+                              const SizedBox(height: 8),
+                            ]
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    const _SectionTitle('Team Responses'),
+                    const SizedBox(height: 8),
+                    const _TeamResponseCard(
                       statusText: 'Rejected',
                       statusColor: kAppRed,
                     ),
-                    SizedBox(height: 8),
-                    _TeamResponseCard(
+                    const SizedBox(height: 8),
+                    const _TeamResponseCard(
                       statusText: 'Accepted',
                       statusColor: kAppGreenBright,
                     ),
@@ -89,8 +109,7 @@ class PlayerRequestsScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-            const _BottomNavBar(),
+            const AppBottomNavBar(),
           ],
         ),
       ),
@@ -114,7 +133,9 @@ class _SectionTitle extends StatelessWidget {
 
 /// Team Requests card – logo + "Eagles" + red X & green ✓
 class _TeamRequestCard extends StatelessWidget {
-  const _TeamRequestCard();
+  const _TeamRequestCard({required this.request});
+
+  final TeamRequest request;
 
   @override
   Widget build(BuildContext context) {
@@ -129,10 +150,21 @@ class _TeamRequestCard extends StatelessWidget {
         children: [
           _TeamLogo(),
           const SizedBox(width: 16),
-          const Expanded(
-            child: Text(
-              'Eagles',
-              style: kCardTitleStyle,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  request.teamName,
+                  style: kCardTitleStyle,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  request.matchTitle,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
             ),
           ),
           Row(
@@ -252,72 +284,4 @@ class _CircleIconButton extends StatelessWidget {
 }
 
 // BOTTOM NAV BAR – Home goes back to main using named route
-class _BottomNavBar extends StatelessWidget {
-  const _BottomNavBar();
-
-  void _goHome(BuildContext context) {
-    // Navigate to Home using named route '/'
-    Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-  }
-
-  Widget _buildItem({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.white, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: kBottomNavTextStyle,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      color: kAppGreen,
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildItem(
-            context: context,
-            icon: Icons.home_outlined,
-            label: 'Home',
-            onTap: () => _goHome(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.group_outlined,
-            label: 'My Team',
-            onTap: () => _showNotImplemented(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.search,
-            label: 'Search',
-            onTap: () => _showNotImplemented(context),
-          ),
-          _buildItem(
-            context: context,
-            icon: Icons.person_outline,
-            label: 'MyProfile',
-            onTap: () => _showNotImplemented(context),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Bottom nav replaced by shared AppBottomNavBar above.
