@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/player_repository.dart';
 import '../models/player_model.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class PlayersScreen extends StatefulWidget {
   const PlayersScreen({super.key});
@@ -236,79 +237,11 @@ class _PlayersScreenState extends State<PlayersScreen> {
                 },
               ),
             ),
-
-            // Bottom Navigation
-            Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6B8E4E),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.home,
-                      label: 'Home',
-                      onTap: () => Navigator.of(context).pushNamed('/matches'),
-                    ),
-                    _buildNavItem(
-                      icon: Icons.groups,
-                      label: 'My Team',
-                      onTap: () => Navigator.of(context).pushNamed('/teams'),
-                    ),
-                    _buildNavItem(
-                      icon: Icons.search,
-                      label: 'Search',
-                      onTap: () {
-                        // TODO: Navigate to search screen
-                      },
-                    ),
-                    _buildNavItem(
-                      icon: Icons.person,
-                      label: 'MyProfile',
-                      onTap: () {
-                        // TODO: Navigate to profile screen
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            
+            // Shared Bottom Navigation (Search Active)
+            const AppBottomNavBar(activeIndex: 2),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isActive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }

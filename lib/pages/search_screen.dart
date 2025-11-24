@@ -36,8 +36,7 @@ class SearchPage extends StatelessWidget {
                   _SearchActionButton(
                     label: 'List Players',
                     onTap: () {
-                      // Navigator.of(context).pushNamed('/players'); // Not implemented yet
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Players list not ready yet")));
+                      Navigator.of(context).pushNamed('/players');
                     },
                   ),
                 ],

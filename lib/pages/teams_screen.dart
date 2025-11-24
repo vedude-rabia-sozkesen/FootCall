@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../data/team_repository.dart';
 import '../models/team_model.dart';
-import 'team_info.dart';
+import 'team_info_page.dart';
+import '../widgets/app_bottom_nav.dart';
 
 class TeamsScreen extends StatefulWidget {
   const TeamsScreen({super.key});
@@ -37,15 +38,25 @@ class _TeamsScreenState extends State<TeamsScreen> {
                 color: const Color(0xFFA8C686),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Center(
-                child: Text(
-                  'Teams',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    left: 24,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: const Icon(Icons.arrow_back, color: Colors.black, size: 28),
+                    ),
                   ),
-                ),
+                  const Text(
+                    'Teams',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -210,78 +221,9 @@ class _TeamsScreenState extends State<TeamsScreen> {
             ),
 
             // Bottom Navigation
-            Container(
-              margin: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6B8E4E),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      icon: Icons.home,
-                      label: 'Home',
-                      onTap: () => Navigator.of(context).pushNamed('/matches'),
-                    ),
-                    _buildNavItem(
-                      icon: Icons.groups,
-                      label: 'My Team',
-                      isActive: true,
-                      onTap: () {},
-                    ),
-                    _buildNavItem(
-                      icon: Icons.search,
-                      label: 'Search',
-                      onTap: () {
-                        // TODO: Navigate to search screen
-                      },
-                    ),
-                    _buildNavItem(
-                      icon: Icons.person,
-                      label: 'MyProfile',
-                      onTap: () {
-                        Navigator.of(context).pushNamed('/my-player');
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const AppBottomNavBar(activeIndex: 2), // Search active, or -1 if standalone
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-    bool isActive = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
       ),
     );
   }
