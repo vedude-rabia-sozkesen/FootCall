@@ -17,7 +17,3 @@ class TeamModel {
   final List<PlayerInfo> players;
   final List<String> previousMatches;
 }
-
-
-
-

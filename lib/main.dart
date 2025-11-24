@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'pages/first_page_screen.dart';
+import 'pages/sign_up_page.dart';
+import 'pages/login_page.dart';
+import 'pages/home_page.dart';
 import 'pages/admin_panel_screen.dart';
 import 'pages/create_match_screen.dart';
 import 'pages/match_info_screen.dart';
 import 'pages/matches_screen.dart';
 import 'pages/player_request_screen.dart';
+import 'pages/teams_screen.dart';
+import 'pages/team_info.dart';
+import 'pages/player_info_screen.dart';
+import 'pages/my_player.dart'; // Added import
 import 'utils/colors.dart';
 
 void main() {
@@ -25,14 +33,21 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         textTheme: GoogleFonts.poppinsTextTheme(),
       ),
-      initialRoute: '/matches', // Set initial route
+      initialRoute: '/', // Set initial route
       routes: {
-        '/': (context) => const MainMenuScreen(),
+        '/': (context) => const FirstPageScreen(),      // First
+        '/login': (context) => const LoginPage(),       // Sign In
+        '/signup': (context) => const SignUpPage(),     // Sign Up
+        '/home': (context) => const HomePage(),
         '/matches': (context) => MatchesScreen(),
         '/match-info': (context) => const MatchInfoScreen(),
         '/create-match': (context) => const CreateMatchScreen(),
         '/admin': (context) => const AdminPanelScreen(),
         '/requests': (context) => const PlayerRequestsScreen(),
+        '/teams': (context) => const TeamsScreen(),
+        '/team-info': (context) => const TeamInfoPage(),
+        '/player-info': (context) => const PlayerInfoScreen(),
+        '/my-player': (context) => const MyPlayerPage(), // Added route
       },
     );
   }
@@ -84,6 +99,36 @@ class MainMenuScreen extends StatelessWidget {
                     Navigator.of(context).pushNamed('/requests');
                   },
                   child: const Text('Requests Page'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 260,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAppGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/teams');
+                  },
+                  child: const Text('Teams Screen'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 260,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAppGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/player-info', arguments: '34731');
+                  },
+                  child: const Text('Player Info Screen'),
                 ),
               ),
             ],

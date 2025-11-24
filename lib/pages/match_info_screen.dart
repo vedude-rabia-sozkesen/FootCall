@@ -4,10 +4,11 @@ import '../data/match_repository.dart';
 import '../data/request_repository.dart';
 import '../data/team_repository.dart';
 import '../models/match_model.dart';
-import 'team_info_page.dart';
+import '../utils/colors.dart';
 import '../utils/constants.dart';
 import '../utils/styles.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'team_info_page.dart';
 
 class MatchInfoScreen extends StatelessWidget {
   const MatchInfoScreen({super.key});
@@ -229,4 +230,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-

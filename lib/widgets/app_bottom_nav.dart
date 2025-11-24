@@ -22,12 +22,13 @@ void _showPlaceholderDialog(BuildContext context) {
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({super.key});
 
+  // Change: Home now navigates to the real Home Page ('/home') instead of '/'
   void _goHome(BuildContext context) {
     Navigator.of(context).pushNamedAndRemoveUntil('/matches', (route) => false);
   }
 
   void _goTeams(BuildContext context) {
-    Navigator.of(context).pushNamed('/teams');
+    _showPlaceholderDialog(context);
   }
 
   Widget _buildItem({
@@ -91,4 +92,3 @@ class AppBottomNavBar extends StatelessWidget {
     );
   }
 }
-

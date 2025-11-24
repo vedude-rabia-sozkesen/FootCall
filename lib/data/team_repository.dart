@@ -6,6 +6,7 @@ class TeamRepository {
 
   static final TeamRepository instance = TeamRepository._();
 
+<<<<<<< HEAD
   final List<TeamModel> _teams = [
     TeamModel(
       id: 'team-gs',
@@ -114,7 +115,3 @@ class TeamRepository {
     }
   }
 }
-
-
-
-
