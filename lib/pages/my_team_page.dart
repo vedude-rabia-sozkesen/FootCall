@@ -57,11 +57,7 @@ class MyTeamPage extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: kAppGreen,
         onPressed: () {
-          // Buradan team chat sayfasına gideceksin
-          // Navigator.pushNamed(context, '/team-chat', arguments: team);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Team chat açılacak')),
-          );
+          Navigator.pushNamed(context, '/team-chat');
         },
         child: const Icon(Icons.chat_bubble_outline),
       ),

@@ -109,11 +109,10 @@ class PlayerRequestsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Assuming 'Requests' is a sub-screen of 'My Profile' or 'Admin', so highlighting MyProfile
-            const AppBottomNavBar(activeIndex: 3), 
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 3),
     );
   }
 }

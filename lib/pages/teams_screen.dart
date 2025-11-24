@@ -219,12 +219,10 @@ class _TeamsScreenState extends State<TeamsScreen> {
                 },
               ),
             ),
-
-            // Bottom Navigation
-            const AppBottomNavBar(activeIndex: 2), // Search active, or -1 if standalone
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 2),
     );
   }
 

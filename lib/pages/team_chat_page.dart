@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
-
-const kAppGreen = Color(0xFF4C8F3A);
-const kAppGreenLight = Color(0xFF7BC567);
+import '../utils/colors.dart';
 
 class TeamChatDemo extends StatelessWidget {
   const TeamChatDemo({super.key});
@@ -37,7 +34,12 @@ class _ChatTopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Row(
         children: [
-          const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

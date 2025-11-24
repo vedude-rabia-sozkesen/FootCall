@@ -15,6 +15,7 @@ import 'pages/my_player.dart';
 import 'pages/my_team_page.dart';
 import 'pages/search_screen.dart';
 import 'pages/players_screen.dart';
+import 'pages/team_chat_page.dart';
 import 'utils/colors.dart';
 
 void main() {
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/my-team': (context) => MyTeamPage(),
         '/search': (context) => const SearchPage(),
         '/players': (context) => const PlayersScreen(),
+        '/team-chat': (context) => const TeamChatDemo(),
       },
     );
   }

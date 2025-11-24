@@ -237,12 +237,10 @@ class _PlayersScreenState extends State<PlayersScreen> {
                 },
               ),
             ),
-            
-            // Shared Bottom Navigation (Search Active)
-            const AppBottomNavBar(activeIndex: 2),
           ],
         ),
       ),
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 2),
     );
   }
 
