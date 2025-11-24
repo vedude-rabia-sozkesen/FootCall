@@ -23,7 +23,15 @@ class AppBottomNavBar extends StatelessWidget {
   }
 
   void _onTap(BuildContext context, int index) {
-    if (index == activeIndex) return;
+    if (index == activeIndex) {
+       // Special handling for Search tab
+       if (index == 2) {
+          // Force navigation to /search to "reset" or "go back"
+          Navigator.of(context).pushNamed('/search');
+          return; // Stop further execution to avoid double navigation if switch block also runs
+       }
+       return; // Do nothing for other tabs if already active
+    }
 
     switch (index) {
       case 0: // Home
