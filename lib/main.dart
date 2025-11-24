@@ -5,6 +5,8 @@ import 'pages/create_match_screen.dart';
 import 'pages/match_info_screen.dart';
 import 'pages/matches_screen.dart';
 import 'pages/player_request_screen.dart';
+import 'pages/teams_screen.dart';
+import 'pages/player_info_screen.dart';
 import 'utils/colors.dart';
 
 void main() {
@@ -33,6 +35,8 @@ class MyApp extends StatelessWidget {
         '/create-match': (context) => const CreateMatchScreen(),
         '/admin': (context) => const AdminPanelScreen(),
         '/requests': (context) => const PlayerRequestsScreen(),
+        '/teams': (context) => const TeamsScreen(),
+        '/player-info': (context) => const PlayerInfoScreen(),
       },
     );
   }
@@ -84,6 +88,36 @@ class MainMenuScreen extends StatelessWidget {
                     Navigator.of(context).pushNamed('/requests');
                   },
                   child: const Text('Requests Page'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 260,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAppGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/teams');
+                  },
+                  child: const Text('Teams Screen'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 260,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kAppGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/player-info', arguments: '34731');
+                  },
+                  child: const Text('Player Info Screen'),
                 ),
               ),
             ],
