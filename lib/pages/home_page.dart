@@ -11,7 +11,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ARKA PLAN PATTERN (ellemedim, aynı kaldı)
+          // ARKA PLAN PATTERN
           Positioned.fill(
             child: Opacity(
               opacity: 0.15,
@@ -51,7 +51,7 @@ class HomePage extends StatelessWidget {
         ],
       ),
 
-      bottomNavigationBar: const _HomeBottomBar(currentIndex: 0),
+      bottomNavigationBar: const _HomeBottomBar(),
     );
   }
 }
@@ -113,12 +113,12 @@ class _NextMatchSection extends StatelessWidget {
           style: TextStyle(
             color: kAppGreen,
             fontWeight: FontWeight.w800,
-            fontSize: 22, // büyüdü
+            fontSize: 22,
           ),
         ),
         const SizedBox(height: 14),
         Container(
-          height: 70, // önce 68’di, baya büyüttük
+          height: 70,
           decoration: BoxDecoration(
             color: kAppGreenLight,
             borderRadius: BorderRadius.circular(60),
@@ -150,7 +150,7 @@ class _MatchInfoCell extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: const TextStyle(
-          fontSize: 16, // 16 -> 18
+          fontSize: 16,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -163,8 +163,8 @@ class _VerticalDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 1.5,
-      height: 60, // 30 -> 60
-      color: Colors.black.withOpacity(0.25),
+      height: 60,
+      color: Colors.black.withValues(alpha: 0.25),
     );
   }
 }
@@ -194,7 +194,7 @@ class _PreviousMatchesSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Container(
-          height: 110, // 110 -> 180
+          height: 110,
           decoration: BoxDecoration(
             color: kAppGreenLight,
             borderRadius: BorderRadius.circular(90),
@@ -222,9 +222,9 @@ class _ScoreBubble extends StatelessWidget {
       children: [
         Container(
           width: 100,
-          height: 60, // 60 -> 100
+          height: 60,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.9),
+            color: Colors.white.withValues(alpha: 0.9),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -232,7 +232,7 @@ class _ScoreBubble extends StatelessWidget {
             score,
             style: const TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 18, // 18 -> 26
+              fontSize: 18,
             ),
           ),
         ),
@@ -269,7 +269,7 @@ class _MyTeamSection extends StatelessWidget {
         ),
         const SizedBox(height: 14),
 
-        // Takım kartı
+        // Team Card
         Container(
           decoration: BoxDecoration(
             color: kAppBlueCard,
@@ -280,7 +280,7 @@ class _MyTeamSection extends StatelessWidget {
             children: [
               Container(
                 width: 70,
-                height: 70, // 60 -> 90?
+                height: 70,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -297,7 +297,7 @@ class _MyTeamSection extends StatelessWidget {
                   'Eagles',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 20, // 20 -> 28 //20
+                    fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -308,18 +308,18 @@ class _MyTeamSection extends StatelessWidget {
 
         const SizedBox(height: 18),
 
-        // Captain kartı
+        // Captain Card
         Container(
           decoration: BoxDecoration(
             color: kAppBlueCard,
             borderRadius: BorderRadius.circular(28),
           ),
-          padding: const EdgeInsets.all(16), // 16
+          padding: const EdgeInsets.all(16),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               CircleAvatar(
-                radius: 40, // 30 -> 45 40
+                radius: 40,
                 backgroundColor: Colors.white,
                 backgroundImage:
                 const AssetImage('lib/images/sample_player.jpeg'),
@@ -395,12 +395,31 @@ class _MyTeamSection extends StatelessWidget {
 }
 
 //
-//  Home Bottom BAR
+//  HOME BOTTOM BAR REVERTED TO WIDGET & CUSTOM ICONS/LOGIC
 //
-
 class _HomeBottomBar extends StatelessWidget {
-  final int currentIndex;
-  const _HomeBottomBar({required this.currentIndex});
+  const _HomeBottomBar();
+
+  void _showPlaceholderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Coming soon'),
+        content: const Text('This navigation destination is not ready yet.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Home button logic - now refreshes/stays on Home
+  void _goHome(BuildContext context) {
+    Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -411,26 +430,30 @@ class _HomeBottomBar extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: const [
+        children: [
           _BottomItem(
             imagePath: 'lib/images/home_logo.png',
             label: 'Home',
             isActive: true,
+            onTap: () => _goHome(context),
           ),
           _BottomItem(
             imagePath: 'lib/images/myteam_logo.png',
             label: 'My Team',
             isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
           ),
           _BottomItem(
             imagePath: 'lib/images/search_logo.png',
             label: 'Search',
             isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
           ),
           _BottomItem(
             imagePath: 'lib/images/myprofile_logo.png',
             label: 'MyProfile',
             isActive: false,
+            onTap: () => _showPlaceholderDialog(context),
           ),
         ],
       ),
@@ -442,39 +465,44 @@ class _BottomItem extends StatelessWidget {
   final String imagePath;
   final String label;
   final bool isActive;
+  final VoidCallback onTap;
 
   const _BottomItem({
     required this.imagePath,
     required this.label,
     required this.isActive,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     const Color textColor = Colors.white;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        SizedBox(
-          width: 34,
-          height: 34, // 26 -> 34
-          child: Image.asset(
-            imagePath,
-            fit: BoxFit.contain,
-            color: Colors.white,
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 34,
+            height: 34,
+            child: Image.asset(
+              imagePath,
+              fit: BoxFit.contain,
+              color: Colors.white,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          label,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 15, // 13 -> 15
-            fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+          const SizedBox(height: 3),
+          Text(
+            label,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 15,
+              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
