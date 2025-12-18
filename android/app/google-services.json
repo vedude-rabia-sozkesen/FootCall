@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "863663672688",
+    "project_id": "footcall",
+    "storage_bucket": "footcall.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863663672688:android:6d890d4fee18a9d9cc13b5",
+        "android_client_info": {
+          "package_name": "com.example.project_pages"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANN31PrgtwfICM5hDEPu2I4S769KlJm_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
