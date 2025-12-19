@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import '../services/auth_service.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
 import '../providers/setting_provider.dart';
@@ -16,17 +16,59 @@ class _SignUpPageState extends State<SignUpPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _ageController = TextEditingController();
+  
+  String _selectedPosition = 'Goalkeeper';
+  bool _isLoading = false;
+
+  final List<String> _positions = [
+    'Goalkeeper',
+    'Defender',
+    'Midfielder',
+    'Attacker'
+  ];
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _ageController.dispose();
     super.dispose();
   }
 
-  void _onSignUpPressed() {
-    Navigator.pushReplacementNamed(context, '/login');
+  Future<void> _onSignUpPressed() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty || _nameController.text.isEmpty || _ageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      await authService.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        name: _nameController.text.trim(),
+        position: _selectedPosition,
+        age: int.parse(_ageController.text.trim()),
+      );
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -40,7 +82,6 @@ class _SignUpPageState extends State<SignUpPage> {
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
-          // ARKA PLAN PATTERN
           Positioned.fill(
             child: Opacity(
               opacity: 0.15,
@@ -49,17 +90,13 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Image.asset(
                   'lib/images/bg_pattern.png',
                   fit: BoxFit.cover,
-                  filterQuality: FilterQuality.high,
                 ),
               ),
             ),
           ),
           SafeArea(
-            top: true,
-            bottom: false,
             child: Stack(
               children: [
-                // Sol üst yeşil daire (Back + Sign Up)
                 Positioned(
                   top: -75,
                   left: -80,
@@ -77,187 +114,94 @@ class _SignUpPageState extends State<SignUpPage> {
                         children: [
                           GestureDetector(
                             onTap: () => Navigator.pop(context),
-                            child: Row(
+                            child: const Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(Icons.arrow_back,
-                                    color: Colors.white, size: 18),
+                              children: [
+                                Icon(Icons.arrow_back, color: Colors.white, size: 18),
                                 SizedBox(width: 4),
-                                Text(
-                                  'Back',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
+                                Text('Back', style: TextStyle(color: Colors.white, fontSize: 14)),
                               ],
                             ),
                           ),
                           const SizedBox(height: 6),
-                          const Text(
-                            'Sign In',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                   ),
                 ),
-
-                // Alttaki lacivert panel
                 Column(
                   children: [
                     const SizedBox(height: 140),
                     Expanded(
-                      child: Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: panelColor,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(40),
-                              topRight: Radius.circular(40),
-                            ),
-                          ),
-                          padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: panelColor,
+                          borderRadius: const BorderRadius.only(topLeft: Radius.circular(40), topRight: Radius.circular(40)),
+                        ),
+                        padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+                        child: SingleChildScrollView(
                           child: Column(
                             children: [
-                              // 🔥 ÜST BAR + THEME BUTONU
-                              Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.end,
+                              Text('Create Account', style: kHeaderTextStyle.copyWith(color: Colors.white, fontSize: 24)),
+                              const SizedBox(height: 20),
+                              _DarkLabeledField(label: 'FULL NAME', hintText: 'Dani Martinez', controller: _nameController),
+                              const SizedBox(height: 15),
+                              _DarkLabeledField(label: 'EMAIL', hintText: 'example@mail.com', controller: _emailController, keyboardType: TextInputType.emailAddress),
+                              const SizedBox(height: 15),
+                              _DarkLabeledField(label: 'PASSWORD', hintText: '******', controller: _passwordController, obscureText: true),
+                              const SizedBox(height: 15),
+                              _DarkLabeledField(label: 'AGE', hintText: '25', controller: _ageController, keyboardType: TextInputType.number),
+                              const SizedBox(height: 15),
+                              
+                              // Position Dropdown
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Material(
-                                    color: Colors.transparent,
-                                    shape: const CircleBorder(),
-                                    child: InkWell(
-                                      customBorder: const CircleBorder(),
-                                      onTap: settings.toggleTheme,
-                                      child: SizedBox(
-                                        width: 36,
-                                        height: 36,
-                                        child: Icon(
-                                          isDark
-                                              ? Icons.dark_mode
-                                              : Icons.light_mode,
-                                          color: isDark
-                                              ? Colors.black
-                                              : Colors.white,
-                                          size: 20,
-                                        ),
+                                  const Text('POSITION', style: TextStyle(fontSize: 11, color: Colors.white70, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.22),
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: _selectedPosition,
+                                        dropdownColor: kAppBlueCard,
+                                        iconEnabledColor: Colors.white,
+                                        style: const TextStyle(color: Colors.white),
+                                        isExpanded: true,
+                                        items: _positions.map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value),
+                                          );
+                                        }).toList(),
+                                        onChanged: (newValue) {
+                                          setState(() => _selectedPosition = newValue!);
+                                        },
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'Sign Up',
-                                style: kHeaderTextStyle.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Create an account to continue.',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 28),
-
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    children: [
-                                      _DarkLabeledField(
-                                        label: 'FULL NAME',
-                                        hintText: 'Dani Martinez',
-                                        controller: _nameController,
-                                      ),
-                                      const SizedBox(height: 18),
-                                      _DarkLabeledField(
-                                        label: 'EMAIL',
-                                        hintText:
-                                        'hello@reallygreatsite.com',
-                                        controller: _emailController,
-                                        keyboardType:
-                                        TextInputType.emailAddress,
-                                      ),
-                                      const SizedBox(height: 18),
-                                      _DarkLabeledField(
-                                        label: 'PASSWORD',
-                                        hintText: 'Create a password',
-                                        controller: _passwordController,
-                                        obscureText: true,
-                                      ),
-                                      const SizedBox(height: 28),
-
-                                      SizedBox(
-                                        width: double.infinity,
-                                        child: ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: kAppGreen,
-                                            foregroundColor: Colors.white,
-                                            padding:
-                                            const EdgeInsets.symmetric(
-                                              vertical: 16,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                              BorderRadius.circular(32),
-                                            ),
-                                            textStyle: const TextStyle(
-                                              fontSize: 17,
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          onPressed: _onSignUpPressed,
-                                          child: const Text('Sign Up'),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                        children: [
-                                          const Text(
-                                            'Already registered?',
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.pushReplacementNamed(
-                                                  context, '/login');
-                                            },
-                                            child: const Text(
-                                              'Sign In',
-                                              style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.w600,
-                                                decoration:
-                                                TextDecoration.underline,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                    ],
+                              
+                              const SizedBox(height: 30),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kAppGreen,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
                                   ),
+                                  onPressed: _isLoading ? null : _onSignUpPressed,
+                                  child: _isLoading 
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
                                 ),
                               ),
                             ],
@@ -283,37 +227,17 @@ class _DarkLabeledField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
 
-  const _DarkLabeledField({
-    required this.label,
-    required this.hintText,
-    required this.controller,
-    this.obscureText = false,
-    this.keyboardType,
-  });
+  const _DarkLabeledField({required this.label, required this.hintText, required this.controller, this.obscureText = false, this.keyboardType});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<SettingsProvider>().isDarkMode;
-
-    final labelStyle = TextStyle(
-      fontSize: 11,
-      letterSpacing: 1.5,
-      fontWeight: FontWeight.w600,
-      color: Colors.white.withOpacity(0.9),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: labelStyle),
+        Text(label, style: const TextStyle(fontSize: 11, letterSpacing: 1.5, fontWeight: FontWeight.w600, color: Colors.white70)),
         const SizedBox(height: 6),
         Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.grey[700]!.withOpacity(0.22)
-                : Colors.white.withOpacity(0.22),
-            borderRadius: BorderRadius.circular(28),
-          ),
+          decoration: BoxDecoration(color: Colors.white.withOpacity(0.22), borderRadius: BorderRadius.circular(28)),
           child: TextField(
             controller: controller,
             obscureText: obscureText,
@@ -321,14 +245,9 @@ class _DarkLabeledField extends StatelessWidget {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-              ),
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 14,
-              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             ),
           ),
         ),

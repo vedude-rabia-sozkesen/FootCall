@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/di/providers.dart';
 import 'providers/setting_provider.dart';
@@ -22,40 +23,18 @@ import 'pages/search_screen.dart';
 import 'pages/players_screen.dart';
 import 'pages/team_chat_page.dart';
 import 'utils/colors.dart';
-
-// Firebase options dosyasını import et (oluşturman gerekecek)
 import 'firebase/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 🔥 DEBUG: Firebase başlatma logları ekliyorum
-  print('=' * 50);
-  print('🚀 FootCall Uygulaması Başlatılıyor');
-  print('=' * 50);
-
   try {
-    print('🔄 Firebase başlatılıyor...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-
-    // 🔥 BAŞARILI: Firebase bağlantısı kuruldu
-    print('✅ Firebase başarıyla başlatıldı!');
-    print('📱 Platform: ${DefaultFirebaseOptions.currentPlatform.appId}');
-    print('🔧 Project ID: ${DefaultFirebaseOptions.currentPlatform.projectId}');
-
   } catch (e) {
-    // 🔥 HATA: Firebase bağlantısı başarısız
-    print('❌❌❌ CRITICAL ERROR: Firebase başlatma başarısız! ❌❌❌');
-    print('❌ Hata detayı: $e');
-    print('=' * 50);
-    rethrow; // Hatayı yukarı fırlat
+    debugPrint('Firebase initialization failed: $e');
   }
-
-  // 🔥 DEBUG: Uygulama başlatılıyor
-  print('🎯 Flutter uygulaması başlatılıyor...');
-  print('=' * 50);
 
   runApp(const MyApp());
 }
@@ -69,19 +48,10 @@ class MyApp extends StatelessWidget {
       providers: AppProviders.providers,
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) {
-          // 🔥 DEBUG: Settings bilgilerini göster
-          print('🎨 Settings yüklendi:');
-          print('   • Tema modu: ${settings.isDarkMode ? "🌙 Dark" : "☀️ Light"}');
-          print('   • Son tab: ${settings.lastSelectedTab}');
-
           return MaterialApp(
             title: 'FootCall',
             debugShowCheckedModeBanner: false,
-
-            // ThemeMode ekledik
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-
-            // Light Theme
             theme: ThemeData(
               primaryColor: kAppGreen,
               scaffoldBackgroundColor: Colors.white,
@@ -93,8 +63,6 @@ class MyApp extends StatelessWidget {
                 foregroundColor: Colors.white,
               ),
             ),
-
-            // Dark Theme eklendi
             darkTheme: ThemeData(
               primaryColor: kAppGreen,
               scaffoldBackgroundColor: const Color(0xFF1E1E1E),
@@ -107,10 +75,9 @@ class MyApp extends StatelessWidget {
               ),
               cardColor: const Color(0xFF2D2D2D),
             ),
-
-            initialRoute: '/',
+            // Use AuthGate to decide starting screen
+            home: const AuthGate(),
             routes: {
-              '/': (context) => const FirstPageScreen(),
               '/login': (context) => const LoginPage(),
               '/signup': (context) => const SignUpPage(),
               '/home': (context) => const HomePage(),
@@ -134,89 +101,29 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MainMenuScreen extends StatelessWidget {
-  const MainMenuScreen({super.key});
+// Automatically redirects user based on Login status
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kAppBackground,
-      appBar: AppBar(
-        backgroundColor: kAppGreen,
-        foregroundColor: Colors.white,
-        title: const Text('Main Menu'),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: 260,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kAppGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/admin');
-                  },
-                  child: const Text('Admin Panel'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 260,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: kAppGreen),
-                    foregroundColor: kAppGreen,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/requests');
-                  },
-                  child: const Text('Requests Page'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 260,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kAppGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/teams');
-                  },
-                  child: const Text('Teams Screen'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: 260,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kAppGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/player-info',
-                        arguments: '34731');
-                  },
-                  child: const Text('Player Info Screen'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        
+        // If user is logged in, show HomePage
+        if (snapshot.hasData) {
+          return const HomePage();
+        }
+        
+        // Otherwise, show the Welcome/First Page
+        return const FirstPageScreen();
+      },
     );
   }
 }

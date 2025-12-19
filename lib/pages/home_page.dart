@@ -5,6 +5,7 @@ import '../utils/styles.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'package:provider/provider.dart';
 import '../providers/setting_provider.dart';
+import '../services/auth_service.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -12,28 +13,32 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // backgroundColor: Colors.white, ← SİLİNDİ
       appBar: AppBar(
         title: const Text('FootCall Home'),
         backgroundColor: kAppGreen,
         foregroundColor: Colors.white,
         actions: [
+          // Theme Toggle
           Consumer<SettingsProvider>(
             builder: (context, settings, _) {
               final isDark = settings.isDarkMode;
-
               return IconButton(
                 onPressed: settings.toggleTheme,
                 icon: Icon(
-                  isDark
-                      ? Icons.dark_mode    // Dark moddayken AY
-                      : Icons.light_mode,  // Light moddayken GÜNEŞ
-                  color: isDark
-                      ? Colors.black       // Dark → siyah ay
-                      : Colors.white,      // Light → beyaz güneş
+                  isDark ? Icons.dark_mode : Icons.light_mode,
+                  color: isDark ? Colors.black : Colors.white,
                 ),
               );
             },
+          ),
+          // Logout Button
+          IconButton(
+            onPressed: () async {
+              final authService = Provider.of<AuthService>(context, listen: false);
+              await authService.signOut();
+            },
+            icon: const Icon(Icons.logout),
+            tooltip: 'Log Out',
           ),
         ],
       ),
