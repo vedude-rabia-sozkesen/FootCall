@@ -19,6 +19,7 @@ import 'pages/teams_screen.dart';
 import 'pages/player_info_screen.dart';
 import 'pages/my_player.dart';
 import 'pages/my_team_page.dart';
+import 'pages/create_team_page.dart';
 import 'pages/search_screen.dart';
 import 'pages/players_screen.dart';
 import 'pages/team_chat_page.dart';
@@ -75,7 +76,6 @@ class MyApp extends StatelessWidget {
               ),
               cardColor: const Color(0xFF2D2D2D),
             ),
-            // Use AuthGate to decide starting screen
             home: const AuthGate(),
             routes: {
               '/login': (context) => const LoginPage(),
@@ -90,6 +90,7 @@ class MyApp extends StatelessWidget {
               '/player-info': (context) => const PlayerInfoScreen(),
               '/my-player': (context) => const MyPlayerPage(),
               '/my-team': (context) => MyTeamPage(),
+              '/create-team': (context) => const CreateTeamPage(),
               '/search': (context) => const SearchPage(),
               '/players': (context) => const PlayersScreen(),
               '/team-chat': (context) => const TeamChatDemo(),
@@ -101,7 +102,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Automatically redirects user based on Login status
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -116,12 +116,11 @@ class AuthGate extends StatelessWidget {
           );
         }
         
-        // If user is logged in, show HomePage
+        // This is the source of the "bug" - it only decides the home widget.
+        // It doesn't clear the navigator stack when logout happens.
         if (snapshot.hasData) {
           return const HomePage();
         }
-        
-        // Otherwise, show the Welcome/First Page
         return const FirstPageScreen();
       },
     );

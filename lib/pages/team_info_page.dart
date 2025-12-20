@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/team_model.dart';
 import '../utils/colors.dart';
 import '../providers/setting_provider.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../services/team_service.dart';
+import '../services/auth_service.dart';
 
 class TeamInfoPage extends StatelessWidget {
   const TeamInfoPage({super.key, required this.team});
@@ -24,12 +27,14 @@ class TeamInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
+    final teamService = Provider.of<TeamService>(context, listen: false);
+    final authService = Provider.of<AuthService>(context, listen: false);
 
     final bgColor = isDark ? Colors.grey[900]! : Colors.grey[100]!;
     final tableHeaderColor = isDark ? Colors.grey[800]! : const Color(0xFFDFF0D8);
     final panelTextColor = isDark ? Colors.white : Colors.black87;
     final tableCellBg = isDark ? Colors.grey[850]! : Colors.white;
-    final nameCellColor = isDark ? Colors.green[700]! : Colors.green[100]!; // Name/Surname hücresi koyultuldu
+    final nameCellColor = isDark ? Colors.green[700]! : Colors.green[100]!;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -52,34 +57,74 @@ class TeamInfoPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  Table(
-                    border: TableBorder.all(color: Colors.grey.shade300),
-                    columnWidths: const {
-                      0: FlexColumnWidth(2),
-                      1: FlexColumnWidth(1),
-                      2: FlexColumnWidth(1),
-                      3: FlexColumnWidth(1),
-                    },
-                    children: [
-                      TableRow(
-                        decoration: BoxDecoration(color: tableHeaderColor),
-                        children: const [
-                          _TableHeader('Name/Surname'),
-                          _TableHeader('Age'),
-                          _TableHeader('Position'),
-                          _TableHeader('Title'),
-                        ],
-                      ),
-                      ...team.players.map((player) => TableRow(
+                  // Real-time member list
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance.collection('teams').doc(team.id).snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                      
+                      final teamData = snapshot.data!.data() as Map<String, dynamic>;
+                      final List<String> memberIds = List<String>.from(teamData['memberIds'] ?? []);
+                      final String createdBy = teamData['createdBy'] ?? '';
+
+                      return Table(
+                        border: TableBorder.all(color: Colors.grey.shade300),
+                        columnWidths: const {
+                          0: FlexColumnWidth(2),
+                          1: FlexColumnWidth(1),
+                          2: FlexColumnWidth(1),
+                          3: FlexColumnWidth(1),
+                        },
                         children: [
-                          _TableCell(player.name, bgColor: nameCellColor, textColor: panelTextColor),
-                          _TableCell(player.age, bgColor: tableCellBg, textColor: panelTextColor),
-                          _TableCell(player.position, bgColor: tableCellBg, textColor: panelTextColor),
-                          _TableCell(player.title, bgColor: tableCellBg, textColor: panelTextColor),
+                          TableRow(
+                            decoration: BoxDecoration(color: tableHeaderColor),
+                            children: const [
+                              _TableHeader('Name/Surname'),
+                              _TableHeader('Age'),
+                              _TableHeader('Position'),
+                              _TableHeader('Title'),
+                            ],
+                          ),
+                          // Dynamic members from Firestore
+                          ...memberIds.map((memberId) {
+                            return _buildDynamicTableRow(memberId, createdBy, nameCellColor, tableCellBg, panelTextColor);
+                          }),
                         ],
-                      )),
-                    ],
+                      );
+                    },
                   ),
+                  const SizedBox(height: 24),
+                  
+                  // Join Team Button (Only if not already in this team)
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance.collection('players').doc(authService.currentUser!.uid).snapshots(),
+                    builder: (context, playerSnap) {
+                      if (!playerSnap.hasData) return const SizedBox();
+                      final playerData = playerSnap.data!.data() as Map<String, dynamic>;
+                      final currentTeamId = playerData['currentTeamId'];
+                      
+                      if (currentTeamId == team.id) {
+                        return Center(
+                          child: Text("You are a member of this team", 
+                            style: TextStyle(color: kAppGreen, fontWeight: FontWeight.bold)),
+                        );
+                      }
+
+                      return ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kAppGreen,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        onPressed: currentTeamId != null ? null : () async {
+                          await teamService.joinTeam(team.id, authService.currentUser!.uid);
+                        },
+                        child: Text(currentTeamId != null ? "Already in a Team" : "Join Team"),
+                      );
+                    },
+                  ),
+
                   const SizedBox(height: 24),
                   Text(
                     'Previous Matches',
@@ -94,44 +139,7 @@ class TeamInfoPage extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: team.previousMatches.map((match) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[800]! : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color.fromRGBO(0, 0, 0, 0.05),
-                              blurRadius: 4,
-                              offset: Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              match,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: panelTextColor,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: _matchColor(match),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      return _buildMatchBubble(match, isDark, panelTextColor, _matchColor(match));
                     }).toList(),
                   ),
                 ],
@@ -141,6 +149,48 @@ class TeamInfoPage extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: const AppBottomNavBar(activeIndex: 2),
+    );
+  }
+
+  TableRow _buildDynamicTableRow(String uid, String ownerId, Color nameColor, Color cellColor, Color textColor) {
+    return TableRow(
+      children: [
+        _buildPlayerCell(uid, 'name', nameColor, textColor),
+        _buildPlayerCell(uid, 'age', cellColor, textColor),
+        _buildPlayerCell(uid, 'position', cellColor, textColor),
+        _TableCell(uid == ownerId ? "Admin" : "Player", bgColor: cellColor, textColor: textColor),
+      ],
+    );
+  }
+
+  Widget _buildPlayerCell(String uid, String field, Color bg, Color text) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('players').doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return _TableCell("...", bgColor: bg, textColor: text);
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
+        final val = data?[field]?.toString() ?? "-";
+        return _TableCell(val, bgColor: bg, textColor: text);
+      },
+    );
+  }
+
+  Widget _buildMatchBubble(String match, bool isDark, Color textColor, Color dotColor) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800]! : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.05), blurRadius: 4, offset: Offset(0, 3))],
+      ),
+      child: Column(
+        children: [
+          Text(match, style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+          const SizedBox(height: 6),
+          Container(width: 10, height: 10, decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle)),
+        ],
+      ),
     );
   }
 }
@@ -173,26 +223,14 @@ class _TopBar extends StatelessWidget {
           ),
           Positioned(
             top: 35,
-            child: Text(
-              'Team Info',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: isDark ? Colors.white : Colors.black,
-              ),
-            ),
+            child: const Text('Team Info', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
           ),
-          // Dark/Light mode button
           Positioned(
+            left: 16,
             top: 35,
-            right: 20,
-            child: GestureDetector(
-              onTap: () => context.read<SettingsProvider>().toggleTheme(),
-              child: Icon(
-                isDark ? Icons.dark_mode : Icons.light_mode,
-                color: isDark ? Colors.white : Colors.black,
-                size: 26,
-              ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.black),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
         ],
@@ -209,10 +247,7 @@ class _TableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(10),
-      child: Text(
-        text,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
+      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }
@@ -228,10 +263,7 @@ class _TableCell extends StatelessWidget {
     return Container(
       color: bgColor,
       padding: const EdgeInsets.all(10),
-      child: Text(
-        text,
-        style: TextStyle(color: textColor),
-      ),
+      child: Text(text, style: TextStyle(color: textColor)),
     );
   }
 }

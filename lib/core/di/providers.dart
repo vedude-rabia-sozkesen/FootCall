@@ -3,6 +3,7 @@ import 'package:provider/single_child_widget.dart';
 import '../../services/prefs_service.dart';
 import '../../providers/setting_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/team_service.dart';
 
 class AppProviders {
   static final List<SingleChildWidget> providers = [
@@ -12,6 +13,9 @@ class AppProviders {
     ),
     Provider<AuthService>(
       create: (_) => AuthService(),
+    ),
+    Provider<TeamService>(
+      create: (_) => TeamService(),
     ),
 
     // Providers
