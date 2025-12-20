@@ -27,18 +27,23 @@ class AuthService {
 
       // Create player document in Firestore
       if (credential.user != null) {
-        await _firestore.collection('players').doc(credential.user!.uid).set({
-          'uid': credential.user!.uid,
-          'name': name,
-          'email': email,
-          'position': position,
-          'age': age,
-          'photoUrl': '', // Default empty
+        final String uid = credential.user!.uid;
+        
+        await _firestore.collection('players').doc(uid).set({
+          'id': uid,                // Unique ID
+          'uid': uid,               // User ID reference
+          'createdBy': uid,         // Linked to user ID (required)
+          'createdAt': FieldValue.serverTimestamp(), // Timestamp (required)
+          'name': name,             // App-specific
+          'email': email,           // App-specific
+          'position': position,     // App-specific
+          'age': age,               // App-specific
+          'photoUrl': '',           // App-specific
           'likes': 0,
           'dislikes': 0,
-          'previousMatches': [], // List of match IDs
-          'currentTeamId': null,  // Initialized as null
-          'createdAt': FieldValue.serverTimestamp(),
+          'previousMatches': [], 
+          'currentTeamId': null,
+          'status': 'active',       // App-specific status
         });
       }
       return credential;
