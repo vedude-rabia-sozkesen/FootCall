@@ -26,7 +26,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
-    final bool isAdmin = true; 
+    final bool isAdmin = true; // Placeholder for admin check
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF1E2235) : const Color(0xFFF2F4FA),
@@ -35,30 +35,9 @@ class _MatchesScreenState extends State<MatchesScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(kDefaultPadding),
-              child: _MatchesHeader(
-                onFilterTap: () { /* Filter logic can be re-added here */ },
-              ),
+              child: _MatchesHeader(),
             ),
-            Container(
-              color: const Color(0xFFCBD8FF),
-              padding: const EdgeInsets.symmetric(
-                horizontal: kDefaultPadding,
-                vertical: 12,
-              ),
-              child: Row(
-                children: const [
-                  Expanded(
-                    child: Text('location', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
-                  ),
-                  Expanded(
-                    child: Text('team name(s)', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
-                  ),
-                  Expanded(
-                    child: Text('time', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            ),
+            _ListHeader(),
             const SizedBox(height: kSmallPadding),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -68,11 +47,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'No matches available',
-                      ),
-                    );
+                    return const Center(child: Text('No matches available'));
                   }
 
                   final matches = snapshot.data!.docs;
@@ -97,24 +72,45 @@ class _MatchesScreenState extends State<MatchesScreen> {
   }
 }
 
+class _ListHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFFCBD8FF),
+      padding: const EdgeInsets.symmetric(
+        horizontal: kDefaultPadding,
+        vertical: 12,
+      ),
+      child: Row(
+        children: const [
+          Expanded(flex: 4, child: Text('TEAMS', style: TextStyle(color: Color(0xFF4B5775), fontSize: 11, fontWeight: FontWeight.w600))),
+          Expanded(flex: 3, child: Text('TIME', style: TextStyle(color: Color(0xFF4B5775), fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+          Expanded(flex: 2, child: Text('RESULT', style: TextStyle(color: Color(0xFF4B5775), fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+          Expanded(flex: 4, child: Text('STATUS/ACTIONS', style: TextStyle(color: Color(0xFF4B5775), fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+        ],
+      ),
+    );
+  }
+}
+
 class _CreateMatchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final isDark = context.watch<SettingsProvider>().isDarkMode;
     return Padding(
       padding: const EdgeInsets.all(kDefaultPadding),
       child: Column(
         children: [
-          const Text('Create Match', style: kCardTitleStyle),
+          Text(
+            'Create Match',
+            style: kCardTitleStyle.copyWith(
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          ),
           const SizedBox(height: 12),
           GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateMatchRequestPage()));
-            },
-            child: const CircleAvatar(
-              radius: 36,
-              backgroundColor: Color(0xFF87C56C),
-              child: Icon(Icons.add, color: Colors.white, size: 36),
-            ),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateMatchRequestPage())),
+            child: const CircleAvatar(radius: 36, backgroundColor: Color(0xFF87C56C), child: Icon(Icons.add, color: Colors.white, size: 36)),
           ),
         ],
       ),
@@ -122,42 +118,25 @@ class _CreateMatchButton extends StatelessWidget {
   }
 }
 
-
 class _MatchesHeader extends StatelessWidget {
-  final VoidCallback onFilterTap;
-
-  const _MatchesHeader({required this.onFilterTap});
-
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
-
     return Container(
       height: 96,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: settings.isDarkMode
-              ? const [Color(0xFF41465A), Color(0xFF2C3144)]
-              : const [Color(0xFF6E7FB6), Color(0xFF4F5F9E)],
+          colors: settings.isDarkMode ? [const Color(0xFF41465A), const Color(0xFF2C3144)] : [const Color(0xFF6E7FB6), const Color(0xFF4F5F9E)],
         ),
         borderRadius: BorderRadius.circular(32),
       ),
       child: Stack(
         children: [
-          Center(
-            child: Text('Matches', style: kCardTitleStyle.copyWith(fontSize: 18)),
-          ),
-          Positioned(
-            top: 4,
-            right: 8,
-            child: IconButton(
-              onPressed: settings.toggleTheme,
-              icon: Icon(
-                settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                color: settings.isDarkMode ? Colors.black : Colors.white,
-              ),
-            ),
-          ),
+          Center(child: Text('Matches', style: kCardTitleStyle.copyWith(fontSize: 18))),
+          Positioned(top: 4, right: 8, child: IconButton(
+            onPressed: settings.toggleTheme,
+            icon: Icon(settings.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: settings.isDarkMode ? Colors.black : Colors.white),
+          )),
         ],
       ),
     );
@@ -172,74 +151,130 @@ class _MatchListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final matchData = matchDoc.data() as Map<String, dynamic>;
     final teamService = TeamService();
+    final matchService = MatchService();
 
     final teamAId = matchData['teamA_id'];
     final teamBId = matchData['teamB_id'];
-    final location = matchData['location'] ?? 'N/A';
+    final status = matchData['status'] ?? 'pending';
     final timestamp = matchData['matchDate'] as Timestamp?;
-    final date = timestamp != null 
-        ? DateFormat('HH:mm').format(timestamp.toDate()) 
-        : 'N/A';
+    final date = timestamp != null ? DateFormat('dd/MM HH:mm').format(timestamp.toDate()) : 'N/A';
+    final scoreA = matchData['scoreA'];
+    final scoreB = matchData['scoreB'];
+    final result = (status == 'completed' && scoreA != null && scoreB != null) ? '$scoreA - $scoreB' : '-';
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed('/match-info', arguments: matchDoc.id);
-      },
-      child: Container(
-        width: double.infinity,
-        color: context.watch<SettingsProvider>().isDarkMode
-            ? const Color(0xFF2A3150)
-            : const Color(0xFF6B79A6),
-        padding: const EdgeInsets.symmetric(
-          horizontal: kDefaultPadding,
-          vertical: 14,
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                location,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: kDefaultPadding, vertical: 16.0),
+      color: context.watch<SettingsProvider>().isDarkMode ? const Color(0xFF2A3150) : const Color(0xFF6B79A6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: 4,
+            child: FutureBuilder<List<TeamModel?>>(
+              future: Future.wait([teamService.getTeam(teamAId), teamService.getTeam(teamBId)]),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const Text('...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13));
+                final teamA = snapshot.data![0];
+                final teamB = snapshot.data![1];
+                return Text('${teamA?.name ?? 'Team A'} vs ${teamB?.name ?? 'Team B'}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis);
+              },
             ),
-            Expanded(
-              child: FutureBuilder<List<TeamModel?>>(
-                future: Future.wait([teamService.getTeam(teamAId), teamService.getTeam(teamBId)]),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Text('Loading...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600));
-                  }
-                  final teamA = snapshot.data![0];
-                  final teamB = snapshot.data![1];
-                  final teamAName = teamA?.name ?? 'Team A';
-                  final teamBName = teamB?.name ?? 'Team B';
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(date, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13), textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: 2,
+            child: Text(result, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), textAlign: TextAlign.center),
+          ),
+          Expanded(
+            flex: 4,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                 Flexible(child: Text(status.toUpperCase(), style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                 const SizedBox(width: 4),
+                 if (status == 'scheduled')
+                  SizedBox(
+                    width: 22,
+                    child: IconButton(
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.play_circle, color: Colors.white, semanticLabel: 'Mark as Played'),
+                      onPressed: () => FirebaseFirestore.instance.collection('matches').doc(matchDoc.id).update({'status': 'played'}),
+                    ),
+                  ),
+                if (status == 'played' || status == 'completed')
+                  SizedBox(
+                    width: 22,
+                    child: IconButton(
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.scoreboard, color: Colors.white, semanticLabel: 'Enter Score'),
+                      onPressed: () => _showScoreDialog(context, matchDoc.id, teamService, teamAId, teamBId, matchService),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                  return Row(
-                    children: [
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          '$teamAName vs $teamBName',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  );
-                },
+  void _showScoreDialog(BuildContext context, String matchId, TeamService teamService, String teamAId, String teamBId, MatchService matchService) async {
+    final teamA = await teamService.getTeam(teamAId);
+    final teamB = await teamService.getTeam(teamBId);
+    final scoreAController = TextEditingController();
+    final scoreBController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter Final Score'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: scoreAController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: teamA?.name ?? 'Team A'),
+                validator: (value) => value == null || value.isEmpty ? 'Enter score' : null,
               ),
-            ),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  date,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                ),
+              TextFormField(
+                controller: scoreBController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(labelText: teamB?.name ?? 'Team B'),
+                validator: (value) => value == null || value.isEmpty ? 'Enter score' : null,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final scoreA = int.parse(scoreAController.text);
+                final scoreB = int.parse(scoreBController.text);
+                try {
+                  await matchService.updateMatchResult(matchId: matchId, scoreA: scoreA, scoreB: scoreB);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Match result updated!'), backgroundColor: Colors.green));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                }
+              }
+            },
+            child: const Text('Submit'),
+          ),
+        ],
       ),
     );
   }

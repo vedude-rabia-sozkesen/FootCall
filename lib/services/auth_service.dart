@@ -33,8 +33,11 @@ class AuthService {
           'position': position,
           'age': age,
           'photoUrl': '',
-          'likes': 0,
-          'dislikes': 0,
+          'matchesPlayed': 0,
+          'wins': 0,
+          'losses': 0,
+          'phone': '', // Initially empty, can be updated from profile
+          'location': '', // Initially empty, can be updated from profile
           'previousMatches': [], 
           'currentTeamId': null,
           'status': 'active',
@@ -66,5 +69,9 @@ class AuthService {
 
   Future<DocumentSnapshot> getPlayerData(String uid) {
     return _firestore.collection('players').doc(uid).get();
+  }
+  
+  Future<void> updatePlayerProfile(String uid, Map<String, dynamic> data) async {
+    await _firestore.collection('players').doc(uid).update(data);
   }
 }
