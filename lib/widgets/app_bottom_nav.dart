@@ -6,44 +6,25 @@ class AppBottomNavBar extends StatelessWidget {
 
   const AppBottomNavBar({super.key, required this.activeIndex});
 
-  void _showPlaceholderDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Coming soon'),
-        content: const Text('This navigation destination is not ready yet.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _onTap(BuildContext context, int index) {
-    if (index == activeIndex) {
-       // Special handling for Search tab
-       if (index == 2) {
-          // Force navigation to /search to "reset" or "go back"
-          Navigator.of(context).pushNamed('/search');
-          return; // Stop further execution to avoid double navigation if switch block also runs
-       }
-       return; // Do nothing for other tabs if already active
-    }
-
+    // Only skip navigation if we are ALREADY on that specific page
+    // and not just because the index matches.
+    
     switch (index) {
       case 0: // Home
+        if (ModalRoute.of(context)?.settings.name == '/home') return;
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
         break;
       case 1: // My Team
+        if (ModalRoute.of(context)?.settings.name == '/my-team') return;
         Navigator.of(context).pushNamed('/my-team');
         break;
-      case 2: // Search (Search Screen)
+      case 2: // Search
+        if (ModalRoute.of(context)?.settings.name == '/search') return;
         Navigator.of(context).pushNamed('/search');
         break;
       case 3: // My Profile
+        if (ModalRoute.of(context)?.settings.name == '/my-player') return;
         Navigator.of(context).pushNamed('/my-player');
         break;
     }
@@ -104,8 +85,6 @@ class _BottomItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color textColor = Colors.white;
-
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -124,7 +103,7 @@ class _BottomItem extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: textColor,
+              color: Colors.white,
               fontSize: 15,
               fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
             ),
