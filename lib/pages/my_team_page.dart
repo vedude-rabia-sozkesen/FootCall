@@ -20,39 +20,71 @@ class MyTeamPage extends StatelessWidget {
     final authService = Provider.of<AuthService>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
 
-    return Scaffold(
-      backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-      bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('players').doc(authService.currentUser!.uid).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: kAppGreen));
-          }
-
-          final data = snapshot.data?.data() as Map<String, dynamic>?;
-          final String? teamId = data?['currentTeamId'];
-
-          if (teamId == null || teamId.isEmpty) {
-            return const _NoTeamView();
-          }
-
-          return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('teams').doc(teamId).snapshots(),
-            builder: (context, teamSnap) {
-              if (teamSnap.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: kAppGreen));
-              }
-              if (!teamSnap.hasData || !teamSnap.data!.exists) {
-                return const _NoTeamView();
-              }
-
-              final team = TeamModel.fromFirestore(teamSnap.data!);
-              return _TeamDetailView(team: team);
-            },
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('players')
+          .doc(authService.currentUser!.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+            bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
+            body: const Center(child: CircularProgressIndicator(color: kAppGreen)),
           );
-        },
-      ),
+        }
+
+        final data = snapshot.data?.data() as Map<String, dynamic>?;
+        final String? teamId = data?['currentTeamId'];
+
+        if (teamId == null || teamId.isEmpty) {
+          return Scaffold(
+            backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+            bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
+            body: const _NoTeamView(),
+          );
+        }
+
+        return StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('teams')
+              .doc(teamId)
+              .snapshots(),
+          builder: (context, teamSnap) {
+            if (teamSnap.connectionState == ConnectionState.waiting) {
+              return Scaffold(
+                backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+                bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
+                body: const Center(child: CircularProgressIndicator(color: kAppGreen)),
+              );
+            }
+            if (!teamSnap.hasData || !teamSnap.data!.exists) {
+              return Scaffold(
+                backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+                bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
+                body: const _NoTeamView(),
+              );
+            }
+
+            final team = TeamModel.fromFirestore(teamSnap.data!);
+            return Scaffold(
+              backgroundColor: isDark ? Colors.grey[900] : Colors.white,
+              bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
+              floatingActionButton: FloatingActionButton(
+                backgroundColor: kAppGreen,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/team-chat', arguments: {
+                    'teamId': team.id,
+                    'teamName': team.name,
+                  });
+                },
+                child: const Icon(Icons.chat, color: Colors.white),
+              ),
+              body: _TeamDetailView(team: team),
+            );
+          },
+        );
+      },
     );
   }
 }

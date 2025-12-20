@@ -4,6 +4,8 @@ import '../../services/prefs_service.dart';
 import '../../providers/setting_provider.dart';
 import '../../services/auth_service.dart';
 import '../../services/team_service.dart';
+import '../../services/match_request_service.dart';
+import '../../services/chat_service.dart';
 
 class AppProviders {
   static final List<SingleChildWidget> providers = [
@@ -16,6 +18,12 @@ class AppProviders {
     ),
     Provider<TeamService>(
       create: (_) => TeamService(),
+    ),
+    Provider<MatchRequestService>(
+      create: (_) => MatchRequestService(),
+    ),
+    Provider<ChatService>(
+      create: (_) => ChatService(),
     ),
 
     // Providers

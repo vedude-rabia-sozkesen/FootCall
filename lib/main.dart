@@ -77,6 +77,20 @@ class MyApp extends StatelessWidget {
               cardColor: const Color(0xFF2D2D2D),
             ),
             home: const AuthGate(),
+            onGenerateRoute: (settings) {
+              if (settings.name == '/team-chat') {
+                final args = settings.arguments as Map<String, dynamic>;
+                return MaterialPageRoute(
+                  builder: (context) {
+                    return TeamChatPage(
+                      teamId: args['teamId'],
+                      teamName: args['teamName'],
+                    );
+                  },
+                );
+              }
+              return null;
+            },
             routes: {
               '/login': (context) => const LoginPage(),
               '/signup': (context) => const SignUpPage(),
@@ -93,7 +107,6 @@ class MyApp extends StatelessWidget {
               '/create-team': (context) => const CreateTeamPage(),
               '/search': (context) => const SearchPage(),
               '/players': (context) => const PlayersScreen(),
-              '/team-chat': (context) => const TeamChatDemo(),
             },
           );
         },
@@ -115,9 +128,6 @@ class AuthGate extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        
-        // This is the source of the "bug" - it only decides the home widget.
-        // It doesn't clear the navigator stack when logout happens.
         if (snapshot.hasData) {
           return const HomePage();
         }
