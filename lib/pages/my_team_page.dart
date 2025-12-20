@@ -35,7 +35,6 @@ class MyTeamPage extends StatelessWidget {
             return const _NoTeamView();
           }
 
-          // Use another StreamBuilder for the team itself
           return StreamBuilder<DocumentSnapshot>(
             stream: FirebaseFirestore.instance.collection('teams').doc(teamId).snapshots(),
             builder: (context, teamSnap) {
@@ -140,9 +139,9 @@ class _TeamDetailView extends StatelessWidget {
                 stream: FirebaseFirestore.instance.collection('players').doc(memberId).snapshots(),
                 builder: (context, playerSnap) {
                   String name = "Loading...";
-                  if (playerSnap.hasData && playerSnap.data!.data() != null) {
-                    final data = playerSnap.data!.data() as Map<String, dynamic>;
-                    name = data['name'] ?? "No Name";
+                  if (playerSnap.hasData && playerSnap.data != null && playerSnap.data!.exists) {
+                    final data = playerSnap.data!.data() as Map<String, dynamic>?;
+                    name = data?['name'] ?? "No Name";
                   }
                   
                   return Card(
