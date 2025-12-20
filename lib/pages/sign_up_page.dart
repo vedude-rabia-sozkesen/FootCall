@@ -58,7 +58,8 @@ class _SignUpPageState extends State<SignUpPage> {
       );
       
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        // IMPORTANT: Let AuthGate handle the navigation to Home.
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {

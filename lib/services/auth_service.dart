@@ -5,13 +5,9 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Stream for auth state changes
   Stream<User?> get userStream => _auth.authStateChanges();
-
-  // Current user
   User? get currentUser => _auth.currentUser;
 
-  // Sign Up
   Future<UserCredential?> signUp({
     required String email,
     required String password,
@@ -25,25 +21,23 @@ class AuthService {
         password: password,
       );
 
-      // Create player document in Firestore
       if (credential.user != null) {
         final String uid = credential.user!.uid;
-        
         await _firestore.collection('players').doc(uid).set({
-          'id': uid,                // Unique ID
-          'uid': uid,               // User ID reference
-          'createdBy': uid,         // Linked to user ID (required)
-          'createdAt': FieldValue.serverTimestamp(), // Timestamp (required)
-          'name': name,             // App-specific
-          'email': email,           // App-specific
-          'position': position,     // App-specific
-          'age': age,               // App-specific
-          'photoUrl': '',           // App-specific
+          'id': uid,
+          'uid': uid,
+          'createdBy': uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'name': name,
+          'email': email,
+          'position': position,
+          'age': age,
+          'photoUrl': '',
           'likes': 0,
           'dislikes': 0,
           'previousMatches': [], 
           'currentTeamId': null,
-          'status': 'active',       // App-specific status
+          'status': 'active',
         });
       }
       return credential;
@@ -52,7 +46,6 @@ class AuthService {
     }
   }
 
-  // Login
   Future<UserCredential?> login({
     required String email,
     required String password,
@@ -67,12 +60,10 @@ class AuthService {
     }
   }
 
-  // Sign Out
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  // Get Player Data
   Future<DocumentSnapshot> getPlayerData(String uid) {
     return _firestore.collection('players').doc(uid).get();
   }

@@ -73,9 +73,6 @@ class _LoginPageState extends State<LoginPage> {
     if (password.isEmpty) {
       setState(() => _passwordError = 'Password is required');
       hasError = true;
-    } else if (password.length < 6) {
-      setState(() => _passwordError = 'Password must be at least 6 characters');
-      hasError = true;
     }
 
     if (hasError) return;
@@ -87,7 +84,9 @@ class _LoginPageState extends State<LoginPage> {
       await authService.login(email: email, password: password);
       
       if (mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
+        // IMPORTANT: Just pop back to the AuthGate. 
+        // AuthGate will see the user is logged in and show HomePage.
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
@@ -120,15 +119,6 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text('Sign In'),
         backgroundColor: kAppGreen,
         foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: settings.toggleTheme,
-            icon: Icon(
-              isDark ? Icons.dark_mode : Icons.light_mode,
-              color: isDark ? Colors.black : Colors.white,
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -191,11 +181,6 @@ class _LoginPageState extends State<LoginPage> {
                                           ? const CircularProgressIndicator(color: Colors.white)
                                           : const Text('Sign In', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
                                     ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  TextButton(
-                                    onPressed: () => Navigator.pushNamed(context, '/signup'),
-                                    child: const Text("Don't have an account? Sign Up", style: TextStyle(color: Colors.white, decoration: TextDecoration.underline)),
                                   ),
                                 ],
                               ),
