@@ -84,9 +84,7 @@ class _LoginPageState extends State<LoginPage> {
       await authService.login(email: email, password: password);
       
       if (mounted) {
-        // IMPORTANT: Just pop back to the AuthGate. 
-        // AuthGate will see the user is logged in and show HomePage.
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/setting_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
-import '../data/match_repository.dart';
-import '../models/match_model.dart';
+import '../services/match_service.dart';
+import '../services/team_service.dart';
+import '../models/team_model.dart';
+import '../providers/setting_provider.dart';
+import '../pages/create_match_request_page.dart';
 import '../utils/colors.dart';
 import '../utils/constants.dart';
 import '../utils/styles.dart';
@@ -17,341 +21,107 @@ class MatchesScreen extends StatefulWidget {
 }
 
 class _MatchesScreenState extends State<MatchesScreen> {
-  final MatchRepository _repository = MatchRepository.instance;
-  String? _filterCity;
-  String? _filterDistrict;
-  String? _filterTeamName;
-  String? _filterTime;
-
-  /// Check if match time interval is inside the filter time interval
-  /// Example: match "12.00-14.00" is inside filter "12.00-15.00"
-  bool _isTimeIntervalInside(String matchTimeRange, String filterTimeRange) {
-    try {
-      // Parse match time range (e.g., "12.00-14.00")
-      final matchParts = matchTimeRange.split('-');
-      if (matchParts.length != 2) {
-        // Fallback to simple contains if format is unexpected
-        return matchTimeRange.toLowerCase().contains(filterTimeRange.toLowerCase());
-      }
-
-      final matchStart = _parseTime(matchParts[0].trim());
-      final matchEnd = _parseTime(matchParts[1].trim());
-
-      // Parse filter time range (e.g., "12.00-15.00" or just "12.00")
-      final filterParts = filterTimeRange.split('-');
-      if (filterParts.length == 1) {
-        // Single time value - check if it's within match range
-        final filterTime = _parseTime(filterParts[0].trim());
-        return filterTime >= matchStart && filterTime <= matchEnd;
-      } else if (filterParts.length == 2) {
-        // Time range - check if match interval is inside filter interval
-        final filterStart = _parseTime(filterParts[0].trim());
-        final filterEnd = _parseTime(filterParts[1].trim());
-
-        // Match is inside filter if match start >= filter start and match end <= filter end
-        return matchStart >= filterStart && matchEnd <= filterEnd;
-      }
-
-      return false;
-    } catch (e) {
-      // Fallback to simple contains if parsing fails
-      return matchTimeRange.toLowerCase().contains(filterTimeRange.toLowerCase());
-    }
-  }
-
-  /// Parse time string (e.g., "12.00" or "12:00") to minutes since midnight
-  int _parseTime(String timeStr) {
-    // Remove any non-digit characters except dot and colon
-    timeStr = timeStr.replaceAll(RegExp(r'[^\d.:]'), '');
-
-    // Handle both "12.00" and "12:00" formats
-    final parts = timeStr.contains(':')
-        ? timeStr.split(':')
-        : timeStr.split('.');
-
-    if (parts.length >= 2) {
-      final hours = int.tryParse(parts[0]) ?? 0;
-      final minutes = int.tryParse(parts[1]) ?? 0;
-      return hours * 60 + minutes;
-    } else if (parts.length == 1) {
-      // Just hours
-      final hours = int.tryParse(parts[0]) ?? 0;
-      return hours * 60;
-    }
-
-    return 0;
-  }
-
-  List<MatchModel> get _filteredMatches {
-    final allMatches = _repository.matchesNotifier.value;
-    return allMatches.where((match) {
-      if (_filterCity != null && _filterCity!.isNotEmpty) {
-        if (!match.cityDistrict.toLowerCase().contains(_filterCity!.toLowerCase())) {
-          return false;
-        }
-      }
-      if (_filterDistrict != null && _filterDistrict!.isNotEmpty) {
-        if (!match.cityDistrict.toLowerCase().contains(_filterDistrict!.toLowerCase())) {
-          return false;
-        }
-      }
-      if (_filterTeamName != null && _filterTeamName!.isNotEmpty) {
-        if (!match.matchTitle.toLowerCase().contains(_filterTeamName!.toLowerCase()) &&
-            !match.playingTeam.toLowerCase().contains(_filterTeamName!.toLowerCase())) {
-          return false;
-        }
-      }
-      if (_filterTime != null && _filterTime!.isNotEmpty) {
-        if (!_isTimeIntervalInside(match.timeRange, _filterTime!)) {
-          return false;
-        }
-      }
-      return true;
-    }).toList();
-  }
-
-  void _showFilterDialog() {
-    final cityController = TextEditingController(text: _filterCity ?? '');
-    final districtController = TextEditingController(text: _filterDistrict ?? '');
-    final teamController = TextEditingController(text: _filterTeamName ?? '');
-    final timeController = TextEditingController(text: _filterTime ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filter Matches'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: cityController,
-                decoration: const InputDecoration(
-                  labelText: 'City',
-                  hintText: 'Enter city name',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: districtController,
-                decoration: const InputDecoration(
-                  labelText: 'District',
-                  hintText: 'Enter district name',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: teamController,
-                decoration: const InputDecoration(
-                  labelText: 'Team Name',
-                  hintText: 'Enter team name',
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: 'Time',
-                  hintText: 'Enter time range (e.g., 12.00-15.00)',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _filterCity = null;
-                _filterDistrict = null;
-                _filterTeamName = null;
-                _filterTime = null;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Clear'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _filterCity = cityController.text.trim().isEmpty
-                    ? null
-                    : cityController.text.trim();
-                _filterDistrict = districtController.text.trim().isEmpty
-                    ? null
-                    : districtController.text.trim();
-                _filterTeamName = teamController.text.trim().isEmpty
-                    ? null
-                    : teamController.text.trim();
-                _filterTime = timeController.text.trim().isEmpty
-                    ? null
-                    : timeController.text.trim();
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Apply'),
-          ),
-        ],
-      ),
-    );
-  }
+  final MatchService _matchService = MatchService();
 
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
+    final bool isAdmin = true; 
+
     return Scaffold(
-      backgroundColor:
-      isDark ? const Color(0xFF1E2235) : const Color(0xFFF2F4FA),
+      backgroundColor: isDark ? const Color(0xFF1E2235) : const Color(0xFFF2F4FA),
       body: SafeArea(
         child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(kDefaultPadding),
               child: _MatchesHeader(
-                onFilterTap: _showFilterDialog,
+                onFilterTap: () { /* Filter logic can be re-added here */ },
               ),
             ),
+            Container(
+              color: const Color(0xFFCBD8FF),
+              padding: const EdgeInsets.symmetric(
+                horizontal: kDefaultPadding,
+                vertical: 12,
+              ),
+              child: Row(
+                children: const [
+                  Expanded(
+                    child: Text('location', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
+                  ),
+                  Expanded(
+                    child: Text('team name(s)', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
+                  ),
+                  Expanded(
+                    child: Text('time', style: TextStyle(color: Color(0xFF4B5775), fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: kSmallPadding),
             Expanded(
-              child: Container(
-                color: isDark
-                    ? const Color(0xFF1E2235)
-                    : const Color(0xFFEFF2FA),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      color: const Color(0xFFCBD8FF),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: kDefaultPadding,
-                        vertical: 12,
-                      ),
-                      child: Row(
-                        children: const [
-                          Expanded(
-                            child: Text(
-                              'city/district',
-                              style: TextStyle(
-                                color: Color(0xFF4B5775),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'team name(s)',
-                              style: TextStyle(
-                                color: Color(0xFF4B5775),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              'time',
-                              style: TextStyle(
-                                color: Color(0xFF4B5775),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: kSmallPadding),
-                    Expanded(
-                      child: ValueListenableBuilder<List<MatchModel>>(
-                        valueListenable: _repository.matchesNotifier,
-                        builder: (context, matches, _) {
-                          final filtered = _filteredMatches;
-                          if (filtered.isEmpty) {
-                            return const Center(
-                              child: Text(
-                                'No matches available',
-                                style: TextStyle(color: Colors.black87),
-                              ),
-                            );
-                          }
-                          return ListView.separated(
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: kSmallPadding),
-                            itemBuilder: (context, index) {
-                              final match = filtered[index];
-                              return Dismissible(
-                                key: ValueKey(match.id),
-                                direction: DismissDirection.endToStart,
-                                background: Container(
-                                  alignment: Alignment.centerRight,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                  ),
-                                  color: kAppRed,
-                                  child: const Icon(
-                                    Icons.delete,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                onDismissed: (_) {
-                                  _repository.removeMatch(match.id);
-                                },
-                                child: _MatchListTile(match: match),
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: kDefaultPadding),
-                    Align(
-                      alignment: Alignment.center,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _matchService.getMatches(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
                       child: Text(
-                        'Create Match',
-                        style: kCardTitleStyle.copyWith(
-                          color: const Color(0xFF1E2235),
-                        ),
+                        'No matches available',
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_repository.isAdmin)
-                      Align(
-                        alignment: Alignment.center,
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pushNamed('/create-match');
-                          },
-                          child: const CircleAvatar(
-                            radius: 36,
-                            backgroundColor: Color(0xFF87C56C),
-                            child: Icon(
-                              Icons.add,
-                              color: Colors.white,
-                              size: 36,
-                            ),
-                          ),
-                        ),
-                      )
-                    else
-                      const SizedBox.shrink(),
-                    const SizedBox(height: kDefaultPadding),
-                  ],
-                ),
+                    );
+                  }
+
+                  final matches = snapshot.data!.docs;
+
+                  return ListView.separated(
+                    itemCount: matches.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: kSmallPadding),
+                    itemBuilder: (context, index) {
+                      final matchDoc = matches[index];
+                      return _MatchListTile(matchDoc: matchDoc);
+                    },
+                  );
+                },
               ),
             ),
+            if (isAdmin) _CreateMatchButton(),
           ],
         ),
       ),
-      // Use shared bottom bar with activeIndex 2 (assuming it belongs to Search/List Matches flow)
-      // Or if it is a standalone main screen, maybe -1. But consistency suggests 2.
       bottomNavigationBar: const AppBottomNavBar(activeIndex: 2),
     );
   }
 }
+
+class _CreateMatchButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(kDefaultPadding),
+      child: Column(
+        children: [
+          const Text('Create Match', style: kCardTitleStyle),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateMatchRequestPage()));
+            },
+            child: const CircleAvatar(
+              radius: 36,
+              backgroundColor: Color(0xFF87C56C),
+              child: Icon(Icons.add, color: Colors.white, size: 36),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 class _MatchesHeader extends StatelessWidget {
   final VoidCallback onFilterTap;
@@ -363,7 +133,7 @@ class _MatchesHeader extends StatelessWidget {
     final settings = context.watch<SettingsProvider>();
 
     return Container(
-      height: 96, // ⬅ iki satır için yüksekliği artırdık
+      height: 96,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: settings.isDarkMode
@@ -374,54 +144,18 @@ class _MatchesHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // MATCHES TEXT
           Center(
-            child: Text(
-              'Matches',
-              style: kCardTitleStyle.copyWith(fontSize: 18),
-            ),
+            child: Text('Matches', style: kCardTitleStyle.copyWith(fontSize: 18)),
           ),
-
-          // THEME BUTTON (TOP RIGHT)
           Positioned(
             top: 4,
             right: 8,
             child: IconButton(
               onPressed: settings.toggleTheme,
               icon: Icon(
-                settings.isDarkMode
-                    ? Icons.dark_mode    // Dark mode → AY
-                    : Icons.light_mode,  // Light mode → GÜNEŞ
-                color: settings.isDarkMode
-                    ? Colors.black       // Dark mode → siyah ay
-                    : Colors.white,      // Light mode → beyaz güneş
+                settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                color: settings.isDarkMode ? Colors.black : Colors.white,
               ),
-            ),
-          ),
-
-
-          // FILTER BUTTON (BOTTOM RIGHT)
-          Positioned(
-            bottom: 8,
-            right: 12,
-            child: Row(
-              children: [
-                const Text(
-                  'Filter',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: onFilterTap,
-                  icon: const Icon(
-                    Icons.filter_list,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -431,18 +165,25 @@ class _MatchesHeader extends StatelessWidget {
 }
 
 class _MatchListTile extends StatelessWidget {
-  const _MatchListTile({required this.match});
-
-  final MatchModel match;
+  final QueryDocumentSnapshot matchDoc;
+  const _MatchListTile({required this.matchDoc});
 
   @override
   Widget build(BuildContext context) {
+    final matchData = matchDoc.data() as Map<String, dynamic>;
+    final teamService = TeamService();
+
+    final teamAId = matchData['teamA_id'];
+    final teamBId = matchData['teamB_id'];
+    final location = matchData['location'] ?? 'N/A';
+    final timestamp = matchData['matchDate'] as Timestamp?;
+    final date = timestamp != null 
+        ? DateFormat('HH:mm').format(timestamp.toDate()) 
+        : 'N/A';
+
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).pushNamed(
-          '/match-info',
-          arguments: match,
-        );
+        Navigator.of(context).pushNamed('/match-info', arguments: matchDoc.id);
       },
       child: Container(
         width: double.infinity,
@@ -457,42 +198,43 @@ class _MatchListTile extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                match.cityDistrict,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                location,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ),
             Expanded(
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundImage: AssetImage(match.assetLogoPath),
-                  ),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      match.matchTitle,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+              child: FutureBuilder<List<TeamModel?>>(
+                future: Future.wait([teamService.getTeam(teamAId), teamService.getTeam(teamBId)]),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Text('Loading...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600));
+                  }
+                  final teamA = snapshot.data![0];
+                  final teamB = snapshot.data![1];
+                  final teamAName = teamA?.name ?? 'Team A';
+                  final teamBName = teamB?.name ?? 'Team B';
+
+                  return Row(
+                    children: [
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          '$teamAName vs $teamBName',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  match.timeRange,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  date,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

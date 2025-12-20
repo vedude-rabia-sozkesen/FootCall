@@ -33,7 +33,7 @@ class HomePage extends StatelessWidget {
             onPressed: () async {
               final authService = Provider.of<AuthService>(context, listen: false);
               await authService.signOut();
-              // No need to manually navigate; AuthGate handles it!
+              Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
             },
             icon: const Icon(Icons.logout),
             tooltip: 'Log Out',
