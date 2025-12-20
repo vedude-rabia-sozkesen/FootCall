@@ -8,6 +8,10 @@ class AuthService {
   Stream<User?> get userStream => _auth.authStateChanges();
   User? get currentUser => _auth.currentUser;
 
+  Stream<QuerySnapshot> getPlayersStream() {
+    return _firestore.collection('players').snapshots();
+  }
+
   Future<UserCredential?> signUp({
     required String email,
     required String password,

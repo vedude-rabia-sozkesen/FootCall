@@ -13,6 +13,29 @@ class MatchService {
     return _firestore.collection('matches').doc(matchId).snapshots();
   }
 
+  Stream<QuerySnapshot> getNextMatchStream(List<String> playerTeamIds) {
+    if (playerTeamIds.isEmpty) return Stream.empty();
+    return _firestore
+        .collection('matches')
+        .where(Filter.or(Filter('teamA_id', whereIn: playerTeamIds), Filter('teamB_id', whereIn: playerTeamIds)))
+        .where('status', isEqualTo: 'scheduled')
+        .orderBy('matchDate')
+        .limit(1)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> getPreviousMatchesStream(List<String> playerTeamIds, {int limit = 3}) {
+    if (playerTeamIds.isEmpty) return Stream.empty();
+    return _firestore
+        .collection('matches')
+        .where(Filter.or(Filter('teamA_id', whereIn: playerTeamIds), Filter('teamB_id', whereIn: playerTeamIds)))
+        .where('status', isEqualTo: 'completed')
+        .orderBy('matchDate', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
+
+
   Future<void> updateMatchResult({
     required String matchId,
     required int scoreA,

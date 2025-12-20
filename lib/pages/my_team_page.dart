@@ -197,13 +197,21 @@ class _TeamMembersList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sort member IDs to show admin first
+    List<String> sortedMemberIds = List.from(team.memberIds);
+    sortedMemberIds.sort((a, b) {
+      if (a == team.createdBy) return -1; // a is admin, should come first
+      if (b == team.createdBy) return 1;  // b is admin, should come first
+      return 0; // keep original order
+    });
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: team.memberIds.length,
+      itemCount: sortedMemberIds.length,
       itemBuilder: (context, index) {
-        final memberId = team.memberIds[index];
+        final memberId = sortedMemberIds[index];
         return StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance.collection('players').doc(memberId).snapshots(),
           builder: (context, playerSnap) {
@@ -217,6 +225,12 @@ class _TeamMembersList extends StatelessWidget {
               color: isDark ? Colors.grey[800] : Colors.white,
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
+                onTap: () {
+                  // Navigate to player info screen, but don't do anything if it's the current user.
+                  if (memberId != Provider.of<AuthService>(context, listen: false).currentUser?.uid) {
+                     Navigator.of(context).pushNamed('/player-info', arguments: memberId);
+                  }
+                },
                 leading: const CircleAvatar(backgroundColor: kAppGreen, child: Icon(Icons.person, color: Colors.white)),
                 title: Text(name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
                 subtitle: Text(team.createdBy == memberId ? "Admin" : "Member", 

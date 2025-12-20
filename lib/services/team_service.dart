@@ -42,22 +42,41 @@ class TeamService {
   }
 
   Future<void> leaveTeam(String teamId, String playerId) async {
+    final teamRef = _firestore.collection('teams').doc(teamId);
+
     try {
-      final teamDoc = await _firestore.collection('teams').doc(teamId).get();
-      if (!teamDoc.exists) return;
+      await _firestore.runTransaction((transaction) async {
+        final teamDoc = await transaction.get(teamRef);
+        if (!teamDoc.exists) return;
 
-      List memberIds = List.from(teamDoc.data()?['memberIds'] ?? []);
-      memberIds.remove(playerId);
+        final teamData = teamDoc.data()!;
+        List<String> memberIds = List<String>.from(teamData['memberIds'] ?? []);
+        memberIds.remove(playerId);
 
-      if (memberIds.isEmpty) {
-        // No players left, destroy the team
-        await _firestore.collection('teams').doc(teamId).delete();
-      } else {
-        // Players still left, update member list
-        await _firestore.collection('teams').doc(teamId).update({'memberIds': memberIds});
-      }
+        if (memberIds.isEmpty) {
+          // No players left, destroy the team
+          transaction.delete(teamRef);
+        } else {
+          // Check if the leaving player is the admin
+          if (teamData['createdBy'] == playerId) {
+            // Admin is leaving, assign a new admin
+            String newAdminId = memberIds.first;
+            transaction.update(teamRef, {
+              'memberIds': memberIds,
+              'createdBy': newAdminId,
+            });
+          } else {
+            // A regular member is leaving
+            transaction.update(teamRef, {
+              'memberIds': memberIds,
+            });
+          }
+        }
 
-      await _firestore.collection('players').doc(playerId).update({'currentTeamId': null});
+        // Update player's document
+        final playerRef = _firestore.collection('players').doc(playerId);
+        transaction.update(playerRef, {'currentTeamId': null});
+      });
     } catch (e) {
       rethrow;
     }
