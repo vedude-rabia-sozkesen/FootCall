@@ -7,7 +7,8 @@ import '../utils/colors.dart';
 import '../providers/setting_provider.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../services/team_service.dart';
-import '../services/auth_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
+import '../providers/teams_provider.dart';
 
 class TeamInfoPage extends StatelessWidget {
   const TeamInfoPage({super.key, required this.team});
@@ -27,8 +28,9 @@ class TeamInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
-    final teamService = Provider.of<TeamService>(context, listen: false);
-    final authService = Provider.of<AuthService>(context, listen: false);
+    final teamsProvider = Provider.of<TeamsProvider>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    final user = authProvider.user;
 
     final bgColor = isDark ? Colors.grey[900]! : Colors.grey[100]!;
     final tableHeaderColor = isDark ? Colors.grey[800]! : const Color(0xFFDFF0D8);
@@ -96,34 +98,84 @@ class TeamInfoPage extends StatelessWidget {
                   const SizedBox(height: 24),
                   
                   // Join Team Button (Only if not already in this team)
-                  StreamBuilder<DocumentSnapshot>(
-                    stream: FirebaseFirestore.instance.collection('players').doc(authService.currentUser!.uid).snapshots(),
-                    builder: (context, playerSnap) {
-                      if (!playerSnap.hasData) return const SizedBox();
-                      final playerData = playerSnap.data!.data() as Map<String, dynamic>;
-                      final currentTeamId = playerData['currentTeamId'];
-                      
-                      if (currentTeamId == team.id) {
-                        return Center(
-                          child: Text("You are a member of this team", 
-                            style: TextStyle(color: kAppGreen, fontWeight: FontWeight.bold)),
-                        );
-                      }
+                  user != null
+                      ? StreamBuilder<DocumentSnapshot>(
+                          stream: FirebaseFirestore.instance.collection('players').doc(user.uid).snapshots(),
+                          builder: (context, playerSnap) {
+                            if (!playerSnap.hasData) return const SizedBox();
+                            final playerData = playerSnap.data!.data() as Map<String, dynamic>;
+                            final currentTeamId = playerData['currentTeamId'];
+                            
+                            if (currentTeamId == team.id) {
+                              return Center(
+                                child: Text("You are a member of this team", 
+                                  style: TextStyle(color: kAppGreen, fontWeight: FontWeight.bold)),
+                              );
+                            }
 
-                      return ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: kAppGreen,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        ),
-                        onPressed: currentTeamId != null ? null : () async {
-                          await teamService.joinTeam(team.id, authService.currentUser!.uid);
-                        },
-                        child: Text(currentTeamId != null ? "Already in a Team" : "Join Team"),
-                      );
-                    },
-                  ),
+                            // Check if user is already the admin of this team
+                            final isUserAdmin = team.createdBy == user.uid;
+                            if (isUserAdmin) {
+                              return const SizedBox.shrink();
+                            }
+
+                            // Check if request already sent
+                            return FutureBuilder<bool>(
+                              future: teamsProvider.hasPendingRequestToPlayer(
+                                teamId: team.id,
+                                playerId: user.uid,
+                              ),
+                              builder: (context, requestSnapshot) {
+                                final hasRequest = requestSnapshot.data ?? false;
+                                
+                                if (hasRequest) {
+                                  return FutureBuilder<DocumentSnapshot>(
+                                    future: FirebaseFirestore.instance.collection('players').doc(team.createdBy).get(),
+                                    builder: (context, adminSnapshot) {
+                                      final adminName = adminSnapshot.hasData && adminSnapshot.data!.exists
+                                          ? ((adminSnapshot.data!.data() as Map<String, dynamic>)['name'] as String?) ?? 'the admin'
+                                          : 'the admin';
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.blue),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Join team request sent to $adminName',
+                                                style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+
+                                return ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: kAppGreen,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                                  ),
+                                  onPressed: currentTeamId != null ? null : () => _sendJoinTeamRequest(context, team.id, user.uid, team.createdBy, teamsProvider),
+                                  child: Text(currentTeamId != null ? "Already in a Team" : "Join Team"),
+                                );
+                              },
+                            );
+                          },
+                        )
+                      : const SizedBox(),
 
                   const SizedBox(height: 24),
                   Text(
@@ -192,6 +244,59 @@ class TeamInfoPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _sendJoinTeamRequest(BuildContext context, String teamId, String playerId, String adminId, TeamsProvider teamsProvider) async {
+    try {
+      // Get admin name for notification
+      final adminDoc = await FirebaseFirestore.instance.collection('players').doc(adminId).get();
+      final adminName = adminDoc.exists 
+          ? ((adminDoc.data() as Map<String, dynamic>)['name'] as String?) ?? 'the admin'
+          : 'the admin';
+
+      // Send the request
+      await teamsProvider.sendTeamJoinRequestToPlayer(
+        teamId: teamId,
+        playerId: playerId,
+        requestedBy: playerId, // The player is requesting to join
+      );
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('Join team request sent to $adminName'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Error: ${e.toString()}')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 }
 

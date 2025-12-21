@@ -54,7 +54,9 @@ class MyPlayerPage extends StatelessWidget {
   }
 
   AppBar _buildAppBar(BuildContext context) {
-    final bool isAdmin = true; // Placeholder for admin check
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final user = authService.currentUser;
+    
     return AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: kAppGreen,
@@ -73,15 +75,44 @@ class MyPlayerPage extends StatelessWidget {
             onPressed: () => Navigator.of(context).pushNamed('/requests'),
             child: const Text("Requests", style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
           ),
-          if (isAdmin)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
-                onPressed: () => Navigator.of(context).pushNamed('/admin'),
-                child: const Text("Admin", style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-            ),
+          // Show admin button only if user created a team
+          StreamBuilder<DocumentSnapshot?>(
+            stream: user != null 
+                ? FirebaseFirestore.instance.collection('players').doc(user.uid).snapshots()
+                : Stream<DocumentSnapshot?>.value(null),
+            builder: (context, playerSnapshot) {
+              if (!playerSnapshot.hasData) return const SizedBox.shrink();
+              
+              final playerData = playerSnapshot.data!.data() as Map<String, dynamic>?;
+              final teamId = playerData?['currentTeamId'] as String?;
+              
+              if (teamId == null) return const SizedBox.shrink();
+              
+              return StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance.collection('teams').doc(teamId).snapshots(),
+                builder: (context, teamSnapshot) {
+                  if (!teamSnapshot.hasData || !teamSnapshot.data!.exists) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  final teamData = teamSnapshot.data!.data() as Map<String, dynamic>;
+                  final createdBy = teamData['createdBy'] as String?;
+                  final bool isAdmin = createdBy == user?.uid;
+                  
+                  if (!isAdmin) return const SizedBox.shrink();
+                  
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white), foregroundColor: Colors.white),
+                      onPressed: () => Navigator.of(context).pushNamed('/admin'),
+                      child: const Text("Admin", style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ],
       );
   }

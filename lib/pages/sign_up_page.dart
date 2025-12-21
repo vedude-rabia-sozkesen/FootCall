@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import '../utils/colors.dart';
 import '../utils/styles.dart';
 import '../providers/setting_provider.dart';
@@ -19,7 +19,6 @@ class _SignUpPageState extends State<SignUpPage> {
   final _ageController = TextEditingController();
   
   String _selectedPosition = 'Goalkeeper';
-  bool _isLoading = false;
 
   final List<String> _positions = [
     'Goalkeeper',
@@ -45,11 +44,9 @@ class _SignUpPageState extends State<SignUpPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.signUp(
+      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      await authProvider.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
         name: _nameController.text.trim(),
@@ -67,8 +64,6 @@ class _SignUpPageState extends State<SignUpPage> {
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -199,10 +194,15 @@ class _SignUpPageState extends State<SignUpPage> {
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
                                   ),
-                                  onPressed: _isLoading ? null : _onSignUpPressed,
-                                  child: _isLoading 
-                                    ? const CircularProgressIndicator(color: Colors.white)
-                                    : const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+                                  onPressed: _onSignUpPressed,
+                                  child: Consumer<app_auth.AuthProvider>(
+                                    builder: (context, authProvider, _) {
+                                      if (authProvider.isLoading) {
+                                        return const CircularProgressIndicator(color: Colors.white);
+                                      }
+                                      return const Text('Sign Up', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold));
+                                    },
+                                  ),
                                 ),
                               ),
                             ],

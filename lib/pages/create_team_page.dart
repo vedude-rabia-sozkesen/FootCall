@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
-import '../services/auth_service.dart';
-import '../services/team_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
+import '../providers/teams_provider.dart';
 import '../models/team_model.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
@@ -27,11 +27,18 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final teamService = Provider.of<TeamService>(context, listen: false);
-      final uid = authService.currentUser!.uid;
+      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      final teamsProvider = Provider.of<TeamsProvider>(context, listen: false);
+      final uid = authProvider.user?.uid;
+      
+      if (uid == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to create a team')),
+        );
+        return;
+      }
+      
       final teamId = const Uuid().v4();
 
       final newTeam = TeamModel(
@@ -45,16 +52,14 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
         memberIds: [uid],
       );
 
-      await teamService.createTeam(newTeam);
-      await teamService.joinTeam(teamId, uid);
+      await teamsProvider.createTeam(newTeam);
+      await teamsProvider.joinTeam(teamId, uid);
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -98,10 +103,15 @@ class _CreateTeamPageState extends State<CreateTeamPage> {
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
                       ),
-                      onPressed: _isLoading ? null : _onCreatePressed,
-                      child: _isLoading 
-                        ? const CircularProgressIndicator(color: Colors.white) 
-                        : const Text("Create Team", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      onPressed: _onCreatePressed,
+                      child: Consumer<TeamsProvider>(
+                        builder: (context, teamsProvider, _) {
+                          if (teamsProvider.isLoading) {
+                            return const CircularProgressIndicator(color: Colors.white);
+                          }
+                          return const Text("Create Team", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold));
+                        },
+                      ),
                     ),
                   ),
                 ],

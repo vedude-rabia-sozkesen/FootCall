@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/auth_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import '../providers/setting_provider.dart';
 import '../utils/colors.dart';
 import '../utils/styles.dart';
@@ -19,7 +19,6 @@ class _LoginPageState extends State<LoginPage> {
   
   String? _emailError;
   String? _passwordError;
-  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -77,11 +76,9 @@ class _LoginPageState extends State<LoginPage> {
 
     if (hasError) return;
 
-    setState(() => _isLoading = true);
-
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      await authService.login(email: email, password: password);
+      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      await authProvider.login(email: email, password: password);
       
       if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
@@ -102,8 +99,6 @@ class _LoginPageState extends State<LoginPage> {
           SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.redAccent),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -167,17 +162,21 @@ class _LoginPageState extends State<LoginPage> {
                                   const SizedBox(height: 28),
                                   SizedBox(
                                     width: double.infinity,
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: kAppGreen,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 16),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-                                      ),
-                                      onPressed: _isLoading ? null : _onLoginPressed,
-                                      child: _isLoading
-                                          ? const CircularProgressIndicator(color: Colors.white)
-                                          : const Text('Sign In', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                                    child: Consumer<app_auth.AuthProvider>(
+                                      builder: (context, authProvider, _) {
+                                        return ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: kAppGreen,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(vertical: 16),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                                          ),
+                                          onPressed: authProvider.isLoading ? null : _onLoginPressed,
+                                          child: authProvider.isLoading
+                                              ? const CircularProgressIndicator(color: Colors.white)
+                                              : const Text('Sign In', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                                        );
+                                      },
                                     ),
                                   ),
                                 ],

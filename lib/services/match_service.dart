@@ -29,7 +29,7 @@ class MatchService {
     return _firestore
         .collection('matches')
         .where(Filter.or(Filter('teamA_id', whereIn: playerTeamIds), Filter('teamB_id', whereIn: playerTeamIds)))
-        .where('status', isEqualTo: 'completed')
+        .where('status', isEqualTo: 'played')
         .orderBy('matchDate', descending: true)
         .limit(limit)
         .snapshots();
@@ -50,7 +50,8 @@ class MatchService {
       }
       final matchData = matchSnapshot.data() as Map<String, dynamic>;
 
-      final bool wasCompleted = matchData['status'] == 'completed';
+      final String currentStatus = matchData['status'] ?? 'scheduled';
+      final bool wasCompleted = currentStatus == 'completed' || currentStatus == 'played';
       final int oldScoreA = matchData['scoreA'] ?? 0;
       final int oldScoreB = matchData['scoreB'] ?? 0;
 
@@ -95,7 +96,7 @@ class MatchService {
       transaction.update(matchRef, {
         'scoreA': scoreA,
         'scoreB': scoreB,
-        'status': 'completed',
+        'status': 'played',
       });
       
       // And apply the new stats

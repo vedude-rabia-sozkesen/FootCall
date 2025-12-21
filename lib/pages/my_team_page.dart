@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
-import '../services/auth_service.dart';
-import '../services/team_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
+import '../providers/teams_provider.dart';
 import '../services/match_request_service.dart';
 import '../models/team_model.dart';
 import '../utils/colors.dart';
@@ -17,16 +17,16 @@ class MyTeamPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
-    final user = authService.currentUser;
+    final user = authProvider.user;
 
     if (user == null) {
       return const Scaffold(body: Center(child: Text("Not logged in")));
     }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: authService.getPlayerStream(user.uid),
+      stream: FirebaseFirestore.instance.collection('players').doc(user.uid).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Scaffold(backgroundColor: isDark ? Colors.grey[900] : Colors.white, body: const Center(child: CircularProgressIndicator()));
@@ -105,9 +105,9 @@ class _TeamDetailView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
-    final bool isCurrentUserAdmin = team.createdBy == authService.currentUser!.uid;
+    final bool isCurrentUserAdmin = team.createdBy == authProvider.user?.uid;
 
     return Column(
       children: [
@@ -145,8 +145,13 @@ class _LeaveTeamButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = context.read<AuthService>();
-    final teamService = context.read<TeamService>();
+    final authProvider = context.read<app_auth.AuthProvider>();
+    final teamsProvider = context.read<TeamsProvider>();
+    final userId = authProvider.user?.uid;
+
+    if (userId == null) {
+      return const SizedBox.shrink();
+    }
 
     return TextButton.icon(
       onPressed: () async {
@@ -164,7 +169,33 @@ class _LeaveTeamButton extends StatelessWidget {
           ),
         );
         if (confirm == true) {
-          await teamService.leaveTeam(team.id, authService.currentUser!.uid);
+          try {
+            await teamsProvider.leaveTeam(team.id, userId);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text('You left the team'),
+                    ],
+                  ),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: ${e.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
         }
       },
       icon: const Icon(Icons.exit_to_app, color: Colors.redAccent),
@@ -200,7 +231,7 @@ class _TeamMembersList extends StatelessWidget {
           builder: (context, playerSnap) {
             String name = "Loading...";
             if (playerSnap.hasData && playerSnap.data!.exists) {
-              name = (playerSnap.data!.data() as Map<String, dynamic>)?['name'] ?? "No Name";
+              name = (playerSnap.data!.data() as Map<String, dynamic>)['name'] ?? "No Name";
             }
             
             return Card(
@@ -208,7 +239,8 @@ class _TeamMembersList extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 onTap: () {
-                  if (memberId != Provider.of<AuthService>(context, listen: false).currentUser?.uid) {
+                  final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                  if (memberId != authProvider.user?.uid) {
                      Navigator.of(context).pushNamed('/player-info', arguments: memberId);
                   }
                 },
@@ -236,14 +268,14 @@ class _AdminMenuButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final teamService = Provider.of<TeamService>(context, listen: false);
+    final teamsProvider = Provider.of<TeamsProvider>(context, listen: false);
 
     return PopupMenuButton<String>(
       onSelected: (value) async {
         if (value == 'kick') {
-           await teamService.leaveTeam(teamId, memberId);
+           await teamsProvider.leaveTeam(teamId, memberId);
         } else if (value == 'make_admin') {
-           await teamService.makeNewAdmin(teamId, memberId);
+           await teamsProvider.makeNewAdmin(teamId, memberId);
         }
       },
       itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -269,40 +301,9 @@ class _MatchRequestsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final requestService = MatchRequestService();
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: requestService.getPendingMatchRequestsForTeam(team.id),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final requests = snapshot.data!.docs;
-        final isDark = context.watch<SettingsProvider>().isDarkMode;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Match Requests", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-              const SizedBox(height: 8),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: requests.length,
-                itemBuilder: (context, index) {
-                  final request = requests[index];
-                  return _MatchRequestCard(request: request, isCurrentUserAdmin: isCurrentUserAdmin);
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      },
-    );
+    // Match requests should only be shown in the requests screen, not in my team page
+    // This section is removed to avoid confusion
+    return const SizedBox.shrink();
   }
 }
 
@@ -314,7 +315,7 @@ class _MatchRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final requestData = request.data() as Map<String, dynamic>;
-    final teamService = TeamService();
+    final teamsProvider = Provider.of<TeamsProvider>(context, listen: false);
     final sendingTeamId = requestData['sendingTeamId'];
     final location = requestData['proposedLocation'];
     final Timestamp timestamp = requestData['proposedMatchDate'];
@@ -328,7 +329,7 @@ class _MatchRequestCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             FutureBuilder<TeamModel?>(
-              future: teamService.getTeam(sendingTeamId),
+              future: teamsProvider.getTeam(sendingTeamId),
               builder: (context, teamSnapshot) {
                 if (!teamSnapshot.hasData) {
                   return const Text("From: Loading...", style: TextStyle(fontWeight: FontWeight.bold));

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 import 'core/di/providers.dart';
 import 'providers/setting_provider.dart';
+import 'providers/auth_provider.dart' as app_auth;
 import 'pages/first_page_screen.dart';
 import 'pages/sign_up_page.dart';
 import 'pages/login_page.dart';
@@ -98,7 +98,7 @@ class MyApp extends StatelessWidget {
               '/matches': (context) => MatchesScreen(),
               '/match-info': (context) => const MatchInfoScreen(),
               '/create-match': (context) => const CreateMatchScreen(),
-              '/admin': (context) => const AdminPanelScreen(),
+              '/admin': (context) => const AdminPanelScreen(), // AdminPanelScreen handles its own access control
               '/requests': (context) => const PlayerRequestsScreen(),
               '/teams': (context) => const TeamsScreen(),
               '/player-info': (context) => const PlayerInfoScreen(),
@@ -120,15 +120,14 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return Consumer<app_auth.AuthProvider>(
+      builder: (context, authProvider, _) {
+        if (authProvider.isLoading) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        if (snapshot.hasData) {
+        if (authProvider.isAuthenticated) {
           return const HomePage();
         }
         return const FirstPageScreen();

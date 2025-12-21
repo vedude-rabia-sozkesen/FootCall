@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer' as developer;
 
-import '../services/auth_service.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import '../services/match_service.dart';
 import '../services/team_service.dart';
 import '../models/team_model.dart';
@@ -18,17 +18,18 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-    final user = authService.currentUser;
+    return Consumer<app_auth.AuthProvider>(
+      builder: (context, authProvider, _) {
+        final user = authProvider.user;
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: Text("Not logged in.")));
-    }
+        if (user == null) {
+          return const Scaffold(body: Center(child: Text("Not logged in.")));
+        }
 
-    return Scaffold(
-      appBar: _buildAppBar(context),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('players').doc(user.uid).snapshots(),
+        return Scaffold(
+          appBar: _buildAppBar(context),
+          body: StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('players').doc(user.uid).snapshots(),
         builder: (context, playerSnapshot) {
           if (!playerSnapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -57,9 +58,11 @@ class HomePage extends StatelessWidget {
               ),
             ],
           );
-        },
-      ),
-      bottomNavigationBar: const AppBottomNavBar(activeIndex: 0),
+          },
+        ),
+        bottomNavigationBar: const AppBottomNavBar(activeIndex: 0),
+      );
+      },
     );
   }
 
@@ -78,8 +81,8 @@ class HomePage extends StatelessWidget {
         ),
         IconButton(
           onPressed: () async {
-            final authService = Provider.of<AuthService>(context, listen: false);
-            await authService.signOut();
+            final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+            await authProvider.signOut();
             Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
           },
           icon: const Icon(Icons.logout),

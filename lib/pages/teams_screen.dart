@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/team_service.dart';
-import '../models/team_model.dart';
+import '../providers/teams_provider.dart';
 import 'team_info_page.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../providers/setting_provider.dart';
@@ -21,7 +20,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
     final bgColor = isDark ? Colors.grey[900]! : Colors.grey[200]!;
-    final teamService = Provider.of<TeamService>(context, listen: false);
+    final teamsProvider = context.watch<TeamsProvider>();
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -77,13 +76,12 @@ class _TeamsScreenState extends State<TeamsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  StreamBuilder<List<TeamModel>>(
-                    stream: teamService.getTeamsStream(),
-                    builder: (context, snapshot) {
-                      final teams = snapshot.data ?? [];
+                  Builder(
+                    builder: (context) {
+                      final teams = teamsProvider.teams;
                       final cities = <String>{'All', ...teams.map((t) => t.city)};
                       return ElevatedButton.icon(
-                        onPressed: () => _showFilterDialog(cities),
+                        onPressed: () => _showFilterDialog(context, cities),
                         icon: const Icon(Icons.filter_list, color: Colors.black),
                         label: Text(
                           'Filter — $selectedCity',
@@ -101,54 +99,7 @@ class _TeamsScreenState extends State<TeamsScreen> {
 
             // List
             Expanded(
-              child: StreamBuilder<List<TeamModel>>(
-                stream: teamService.getTeamsStream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text("No teams found"));
-                  }
-
-                  final filteredTeams = selectedCity == 'All'
-                      ? snapshot.data!
-                      : snapshot.data!
-                          .where((t) => t.city.toLowerCase() == selectedCity.toLowerCase())
-                          .toList();
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[900]! : Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: ListView.separated(
-                      itemCount: filteredTeams.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final team = filteredTeams[index];
-                        return ListTile(
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => TeamInfoPage(team: team),
-                              ),
-                            );
-                          },
-                          tileColor: index % 2 == 0 
-                              ? (isDark ? Colors.grey[850] : const Color(0xFFE8F5E9)) 
-                              : (isDark ? Colors.grey[900] : Colors.white),
-                          title: Text(team.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
-                          subtitle: Text('${team.city} / ${team.district}', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
-                          trailing: Icon(Icons.chevron_right, color: kAppGreen),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
+              child: _buildTeamsList(teamsProvider, isDark),
             ),
           ],
         ),
@@ -157,7 +108,58 @@ class _TeamsScreenState extends State<TeamsScreen> {
     );
   }
 
-  void _showFilterDialog(Set<String> cities) {
+  Widget _buildTeamsList(TeamsProvider teamsProvider, bool isDark) {
+    if (teamsProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (teamsProvider.error != null) {
+      return Center(child: Text('Error: ${teamsProvider.error}'));
+    }
+    
+    if (teamsProvider.teams.isEmpty) {
+      return const Center(child: Text("No teams found"));
+    }
+
+    final filteredTeams = selectedCity == 'All'
+        ? teamsProvider.teams
+        : teamsProvider.teams
+            .where((t) => t.city.toLowerCase() == selectedCity.toLowerCase())
+            .toList();
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900]! : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[300]!),
+      ),
+      child: ListView.separated(
+        itemCount: filteredTeams.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final team = filteredTeams[index];
+          return ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => TeamInfoPage(team: team),
+                ),
+              );
+            },
+            tileColor: index % 2 == 0 
+                ? (isDark ? Colors.grey[850] : const Color(0xFFE8F5E9)) 
+                : (isDark ? Colors.grey[900] : Colors.white),
+            title: Text(team.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+            subtitle: Text('${team.city} / ${team.district}', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
+            trailing: Icon(Icons.chevron_right, color: kAppGreen),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showFilterDialog(BuildContext context, Set<String> cities) {
     showDialog(
       context: context,
       builder: (_) {

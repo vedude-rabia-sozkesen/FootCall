@@ -86,4 +86,71 @@ class TeamService {
     final teamRef = _firestore.collection('teams').doc(teamId);
     await teamRef.update({'createdBy': newAdminId});
   }
+
+  /// Send a team join request to a player
+  /// [teamId] The team that wants to invite the player
+  /// [playerId] The player to invite
+  /// [requestedBy] The user ID of the person sending the request (must be team admin)
+  Future<void> sendTeamJoinRequestToPlayer({
+    required String teamId,
+    required String playerId,
+    required String requestedBy,
+  }) async {
+    try {
+      // Check if player is already in a team
+      final playerDoc = await _firestore.collection('players').doc(playerId).get();
+      if (!playerDoc.exists) {
+        throw Exception("Player not found.");
+      }
+      
+      final playerData = playerDoc.data() as Map<String, dynamic>;
+      final currentTeamId = playerData['currentTeamId'] as String?;
+      
+      if (currentTeamId != null) {
+        throw Exception("Player is already in a team.");
+      }
+
+      // Check if request already exists
+      final existingRequests = await _firestore
+          .collection('player_team_requests')
+          .where('teamId', isEqualTo: teamId)
+          .where('playerId', isEqualTo: playerId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+
+      if (existingRequests.docs.isNotEmpty) {
+        throw Exception("Request already sent to this player.");
+      }
+
+      // Create the request
+      await _firestore.collection('player_team_requests').add({
+        'teamId': teamId,
+        'playerId': playerId,
+        'requestedBy': requestedBy,
+        'status': 'pending', // 'pending', 'accepted', 'rejected'
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Check if a request has been sent to a player
+  Future<bool> hasPendingRequestToPlayer({
+    required String teamId,
+    required String playerId,
+  }) async {
+    try {
+      final requests = await _firestore
+          .collection('player_team_requests')
+          .where('teamId', isEqualTo: teamId)
+          .where('playerId', isEqualTo: playerId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      
+      return requests.docs.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
 }
