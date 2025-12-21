@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 
 import '../services/auth_service.dart';
 import '../services/match_service.dart';
@@ -130,8 +131,13 @@ class _NextMatchSection extends StatelessWidget {
         const Text('Next Match', style: TextStyle(color: kAppGreen, fontWeight: FontWeight.bold, fontSize: 22)),
         const SizedBox(height: 14),
         StreamBuilder<QuerySnapshot>(
-          stream: matchService.getNextMatchStream(teamIds),
+           stream: matchService.getNextMatchStream(teamIds).handleError((error) {
+            developer.log("----------- KINGO, NEXT MATCH HATASI BU, LİNKE TIKLA: ${error.toString()} -----------");
+          }),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+               return const _EmptyStateCard(message: 'Error loading next match.');
+            }
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const _EmptyStateCard(message: 'No match scheduled');
             }

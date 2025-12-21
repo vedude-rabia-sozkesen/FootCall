@@ -19,22 +19,20 @@ class MyTeamPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
+    final user = authService.currentUser;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: Text("Not logged in")));
+    }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('players')
-          .doc(authService.currentUser!.uid)
-          .snapshots(),
+      stream: authService.getPlayerStream(user.uid),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Scaffold(
-            backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-            bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
-            body: const Center(child: CircularProgressIndicator(color: kAppGreen)),
-          );
+        if (!snapshot.hasData) {
+          return Scaffold(backgroundColor: isDark ? Colors.grey[900] : Colors.white, body: const Center(child: CircularProgressIndicator()));
         }
 
-        final data = snapshot.data?.data() as Map<String, dynamic>?;
+        final data = snapshot.data!.data() as Map<String, dynamic>?;
         final String? teamId = data?['currentTeamId'];
 
         if (teamId == null || teamId.isEmpty) {
@@ -46,24 +44,13 @@ class MyTeamPage extends StatelessWidget {
         }
 
         return StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('teams')
-              .doc(teamId)
-              .snapshots(),
+          stream: FirebaseFirestore.instance.collection('teams').doc(teamId).snapshots(),
           builder: (context, teamSnap) {
-            if (teamSnap.connectionState == ConnectionState.waiting) {
-              return Scaffold(
-                backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-                bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
-                body: const Center(child: CircularProgressIndicator(color: kAppGreen)),
-              );
+            if (!teamSnap.hasData) {
+              return Scaffold(backgroundColor: isDark ? Colors.grey[900] : Colors.white, body: const Center(child: CircularProgressIndicator()));
             }
-            if (!teamSnap.hasData || !teamSnap.data!.exists) {
-              return Scaffold(
-                backgroundColor: isDark ? Colors.grey[900] : Colors.white,
-                bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
-                body: const _NoTeamView(),
-              );
+            if (!teamSnap.data!.exists) {
+              return Scaffold(backgroundColor: isDark ? Colors.grey[900] : Colors.white, body: const _NoTeamView());
             }
 
             final team = TeamModel.fromFirestore(teamSnap.data!);
@@ -72,12 +59,7 @@ class MyTeamPage extends StatelessWidget {
               bottomNavigationBar: const AppBottomNavBar(activeIndex: 1),
               floatingActionButton: FloatingActionButton(
                 backgroundColor: kAppGreen,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/team-chat', arguments: {
-                    'teamId': team.id,
-                    'teamName': team.name,
-                  });
-                },
+                onPressed: () => Navigator.pushNamed(context, '/team-chat', arguments: {'teamId': team.id, 'teamName': team.name}),
                 child: const Icon(Icons.chat, color: Colors.white),
               ),
               body: _TeamDetailView(team: team),
@@ -99,8 +81,7 @@ class _NoTeamView extends StatelessWidget {
         children: [
           const Icon(Icons.group_off, size: 80, color: Colors.grey),
           const SizedBox(height: 16),
-          const Text("You are not in a team yet", 
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
+          const Text("You are not in a team yet", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 24),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -142,14 +123,13 @@ class _TeamDetailView extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Team Members", 
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                    _LeaveTeamButton(team: team),
+                    Text("Team Members", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+                    _LeaveTeamButton(team: team, isCurrentUserAdmin: isCurrentUserAdmin),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
-              _TeamMembersList(team: team, isDark: isDark),
+              _TeamMembersList(team: team, isDark: isDark, isCurrentUserAdmin: isCurrentUserAdmin),
             ],
           ),
         ),
@@ -160,7 +140,8 @@ class _TeamDetailView extends StatelessWidget {
 
 class _LeaveTeamButton extends StatelessWidget {
   final TeamModel team;
-  const _LeaveTeamButton({required this.team});
+  final bool isCurrentUserAdmin;
+  const _LeaveTeamButton({required this.team, required this.isCurrentUserAdmin});
 
   @override
   Widget build(BuildContext context) {
@@ -172,8 +153,10 @@ class _LeaveTeamButton extends StatelessWidget {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text("Leave Team?"),
-            content: const Text("Are you sure you want to leave this team?"),
+            title: Text(isCurrentUserAdmin && team.memberIds.length > 1 ? "Disband Team?" : "Leave Team?"),
+            content: Text(isCurrentUserAdmin && team.memberIds.length > 1 
+                ? "You are the admin. If you leave, admin rights will be transferred to the next player. Are you sure?"
+                : "Are you sure you want to leave this team?"),
             actions: [
               TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
               TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Leave", style: TextStyle(color: Colors.red))),
@@ -193,16 +176,16 @@ class _LeaveTeamButton extends StatelessWidget {
 class _TeamMembersList extends StatelessWidget {
   final TeamModel team;
   final bool isDark;
-  const _TeamMembersList({required this.team, required this.isDark});
+  final bool isCurrentUserAdmin;
+  const _TeamMembersList({required this.team, required this.isDark, required this.isCurrentUserAdmin});
 
   @override
   Widget build(BuildContext context) {
-    // Sort member IDs to show admin first
     List<String> sortedMemberIds = List.from(team.memberIds);
     sortedMemberIds.sort((a, b) {
-      if (a == team.createdBy) return -1; // a is admin, should come first
-      if (b == team.createdBy) return 1;  // b is admin, should come first
-      return 0; // keep original order
+      if (a == team.createdBy) return -1;
+      if (b == team.createdBy) return 1;
+      return a.compareTo(b);
     });
 
     return ListView.builder(
@@ -216,9 +199,8 @@ class _TeamMembersList extends StatelessWidget {
           stream: FirebaseFirestore.instance.collection('players').doc(memberId).snapshots(),
           builder: (context, playerSnap) {
             String name = "Loading...";
-            if (playerSnap.hasData && playerSnap.data != null && playerSnap.data!.exists) {
-              final data = playerSnap.data!.data() as Map<String, dynamic>?;
-              name = data?['name'] ?? "No Name";
+            if (playerSnap.hasData && playerSnap.data!.exists) {
+              name = (playerSnap.data!.data() as Map<String, dynamic>)?['name'] ?? "No Name";
             }
             
             return Card(
@@ -226,15 +208,16 @@ class _TeamMembersList extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 onTap: () {
-                  // Navigate to player info screen, but don't do anything if it's the current user.
                   if (memberId != Provider.of<AuthService>(context, listen: false).currentUser?.uid) {
                      Navigator.of(context).pushNamed('/player-info', arguments: memberId);
                   }
                 },
                 leading: const CircleAvatar(backgroundColor: kAppGreen, child: Icon(Icons.person, color: Colors.white)),
                 title: Text(name, style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
-                subtitle: Text(team.createdBy == memberId ? "Admin" : "Member", 
-                  style: const TextStyle(color: kAppGreen, fontWeight: FontWeight.bold)),
+                subtitle: Text(team.createdBy == memberId ? "Admin" : "Member", style: const TextStyle(color: kAppGreen, fontWeight: FontWeight.bold)),
+                trailing: (isCurrentUserAdmin && memberId != team.createdBy) 
+                  ? _AdminMenuButton(teamId: team.id, memberId: memberId, currentAdminId: team.createdBy)
+                  : null,
               ),
             );
           },
@@ -243,6 +226,40 @@ class _TeamMembersList extends StatelessWidget {
     );
   }
 }
+
+class _AdminMenuButton extends StatelessWidget {
+  final String teamId;
+  final String memberId;
+  final String currentAdminId;
+
+  const _AdminMenuButton({required this.teamId, required this.memberId, required this.currentAdminId});
+
+  @override
+  Widget build(BuildContext context) {
+    final teamService = Provider.of<TeamService>(context, listen: false);
+
+    return PopupMenuButton<String>(
+      onSelected: (value) async {
+        if (value == 'kick') {
+           await teamService.leaveTeam(teamId, memberId);
+        } else if (value == 'make_admin') {
+           await teamService.makeNewAdmin(teamId, memberId);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'kick',
+          child: Text('Kick Player'),
+        ),
+        const PopupMenuItem<String>(
+          value: 'make_admin',
+          child: Text('Make New Admin'),
+        ),
+      ],
+    );
+  }
+}
+
 
 class _MatchRequestsSection extends StatelessWidget {
   final TeamModel team;
@@ -258,7 +275,7 @@ class _MatchRequestsSection extends StatelessWidget {
       stream: requestService.getPendingMatchRequestsForTeam(team.id),
       builder: (context, snapshot) {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const SizedBox.shrink(); // No requests, show nothing
+          return const SizedBox.shrink();
         }
 
         final requests = snapshot.data!.docs;
@@ -269,8 +286,7 @@ class _MatchRequestsSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Match Requests", 
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
+              Text("Match Requests", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
               const SizedBox(height: 8),
               ListView.builder(
                 shrinkWrap: true,
@@ -298,7 +314,6 @@ class _MatchRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final requestData = request.data() as Map<String, dynamic>;
-    final requestService = MatchRequestService();
     final teamService = TeamService();
     final sendingTeamId = requestData['sendingTeamId'];
     final location = requestData['proposedLocation'];
@@ -331,20 +346,9 @@ class _MatchRequestCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () async {
-                       await requestService.rejectMatchRequest(request.id);
-                    },
-                    child: const Text("Reject", style: TextStyle(color: Colors.red)),
-                  ),
+                  TextButton(onPressed: () async => await MatchRequestService().rejectMatchRequest(request.id), child: const Text("Reject", style: TextStyle(color: Colors.red))),
                   const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: kAppGreen),
-                    onPressed: () async {
-                       await requestService.acceptMatchRequest(request.id);
-                    },
-                    child: const Text("Accept", style: TextStyle(color: Colors.white)),
-                  ),
+                  ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kAppGreen), onPressed: () async => await MatchRequestService().acceptMatchRequest(request.id), child: const Text("Accept", style: TextStyle(color: Colors.white))),
                 ],
               )
           ],

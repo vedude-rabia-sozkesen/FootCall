@@ -81,4 +81,9 @@ class TeamService {
       rethrow;
     }
   }
+
+  Future<void> makeNewAdmin(String teamId, String newAdminId) async {
+    final teamRef = _firestore.collection('teams').doc(teamId);
+    await teamRef.update({'createdBy': newAdminId});
+  }
 }

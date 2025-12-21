@@ -12,6 +12,10 @@ class AuthService {
     return _firestore.collection('players').snapshots();
   }
 
+  Stream<DocumentSnapshot> getPlayerStream(String uid) {
+    return _firestore.collection('players').doc(uid).snapshots();
+  }
+
   Future<UserCredential?> signUp({
     required String email,
     required String password,
@@ -40,9 +44,12 @@ class AuthService {
           'matchesPlayed': 0,
           'wins': 0,
           'losses': 0,
-          'phone': '', // Initially empty, can be updated from profile
-          'location': '', // Initially empty, can be updated from profile
-          'previousMatches': [], 
+          'likes': 0,
+          'dislikes': 0,
+          'voters': {}, // Tracks who voted for what
+          'phone': '',
+          'location': '',
+          'previousMatches': [],
           'currentTeamId': null,
           'status': 'active',
         });
@@ -51,6 +58,52 @@ class AuthService {
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> likeDislikePlayer(String likedPlayerId, {required bool isLike}) async {
+    final voterId = _auth.currentUser?.uid;
+    if (voterId == null) {
+      throw Exception("You must be logged in to vote.");
+    }
+    if (voterId == likedPlayerId) {
+      throw Exception("You cannot vote for yourself.");
+    }
+
+    final playerRef = _firestore.collection('players').doc(likedPlayerId);
+
+    return _firestore.runTransaction((transaction) async {
+      final playerSnapshot = await transaction.get(playerRef);
+      if (!playerSnapshot.exists) {
+        throw Exception("Player not found.");
+      }
+
+      final playerData = playerSnapshot.data() as Map<String, dynamic>;
+      final Map<String, dynamic> voters = Map<String, dynamic>.from(playerData['voters'] ?? {});
+      
+      final bool hasVoted = voters.containsKey(voterId);
+      final bool? previousVote = hasVoted ? voters[voterId] : null;
+
+      Map<String, dynamic> updates = {};
+
+      if (hasVoted) {
+        // If clicking the same button again, un-vote
+        if (previousVote == isLike) {
+          updates[isLike ? 'likes' : 'dislikes'] = FieldValue.increment(-1);
+          updates['voters.$voterId'] = FieldValue.delete();
+        } else {
+          // If changing vote
+          updates[previousVote! ? 'likes' : 'dislikes'] = FieldValue.increment(-1);
+          updates[isLike ? 'likes' : 'dislikes'] = FieldValue.increment(1);
+          updates['voters.$voterId'] = isLike;
+        }
+      } else {
+        // First time voting
+        updates[isLike ? 'likes' : 'dislikes'] = FieldValue.increment(1);
+        updates['voters.$voterId'] = isLike;
+      }
+
+      transaction.update(playerRef, updates);
+    });
   }
 
   Future<UserCredential?> login({
@@ -74,7 +127,7 @@ class AuthService {
   Future<DocumentSnapshot> getPlayerData(String uid) {
     return _firestore.collection('players').doc(uid).get();
   }
-  
+
   Future<void> updatePlayerProfile(String uid, Map<String, dynamic> data) async {
     await _firestore.collection('players').doc(uid).update(data);
   }

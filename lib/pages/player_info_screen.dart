@@ -1,512 +1,223 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../data/player_repository.dart';
-import '../models/player_model.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../providers/setting_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class PlayerInfoScreen extends StatefulWidget {
+import '../services/auth_service.dart';
+import '../services/match_service.dart';
+import '../services/team_service.dart';
+import '../models/team_model.dart';
+import '../providers/setting_provider.dart';
+import '../utils/colors.dart';
+import '../utils/styles.dart';
+import '../widgets/app_bottom_nav.dart';
+
+class PlayerInfoScreen extends StatelessWidget {
   const PlayerInfoScreen({super.key});
 
   @override
-  State<PlayerInfoScreen> createState() => _PlayerInfoScreenState();
-}
-
-class _PlayerInfoScreenState extends State<PlayerInfoScreen> {
-  final PlayerRepository _repository = PlayerRepository.instance;
-  late String playerId;
-  bool _hasLiked = false;
-  bool _hasDisliked = false;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is String) {
-      playerId = args;
-    } else {
-      // Default to first player if no ID provided
-      playerId = '34731';
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: context.watch<SettingsProvider>().isDarkMode
-                ? [Colors.grey.shade900, Colors.black87] // Dark mode arka plan
-                : [Color(0xFFB8C9E8), Color(0xFFD4D9E8)], // Light mode
-          ),
-        ),
-        child: SafeArea(
-          child: ValueListenableBuilder<List<PlayerModel>>(
-            valueListenable: _repository.playersNotifier,
-            builder: (context, players, _) {
-              final player = _repository.findById(playerId);
-
-              if (player == null) {
-                return const Center(child: Text('Player not found'));
-              }
-
-              return Column(
-                children: [
-                  // 🔥 YENİ EKLENEN - ÜST BAR (Theme Butonu ile)
-                  _PlayerInfoTopBar(),
-
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            const SizedBox(height: 20),
-
-                            // Player photo and info header
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                // Player Info card
-                                Container(
-                                  margin: const EdgeInsets.only(
-                                      top: 60, left: 120),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF4A5568),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Text(
-                                    'Player Info',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-
-                                // Player photo
-                                Positioned(
-                                  left: 10,
-                                  top: 0,
-                                  child: Container(
-                                    width: 140,
-                                    height: 140,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: 4,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.3),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 5),
-                                        ),
-                                      ],
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 68,
-                                      backgroundImage:
-                                      NetworkImage(player.photoUrl),
-                                      backgroundColor: Colors.grey[300],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Player details card
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4A5568),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              player.name,
-                                              style: const TextStyle(
-                                                fontSize: 22,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Position: ${player.position}',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Column(
-                                        children: [
-                                          const Text(
-                                            'Age',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.white70,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${player.age}',
-                                            style: const TextStyle(
-                                              fontSize: 28,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'ID: ${player.id}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Previous Matches section
-                            const Text(
-                              'Previous Matches',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Match scores
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFB8C9E8),
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceEvenly,
-                                children:
-                                player.previousMatches.map((match) {
-                                  return Container(
-                                    width: 80,
-                                    height: 80,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFD4D9E8),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          match.scoreDisplay,
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          width: 12,
-                                          height: 12,
-                                          decoration: BoxDecoration(
-                                            color: match.isWin
-                                                ? Colors.green
-                                                : Colors.red,
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-
-                            const SizedBox(height: 24),
-
-                            // Action buttons (like/dislike and add)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                // Like and Dislike buttons
-                                Row(
-                                  children: [
-                                    _buildActionButton(
-                                      icon: Icons.thumb_up_outlined,
-                                      onPressed: () {
-                                        if (!_hasLiked) {
-                                          setState(() {
-                                            _hasLiked = true;
-                                            _hasDisliked = false;
-                                          });
-                                          _repository.likePlayer(playerId);
-                                        }
-                                      },
-                                      isActive: _hasLiked,
-                                    ),
-                                    const SizedBox(width: 16),
-                                    _buildActionButton(
-                                      icon: Icons.thumb_down_outlined,
-                                      onPressed: () {
-                                        if (!_hasDisliked) {
-                                          setState(() {
-                                            _hasDisliked = true;
-                                            _hasLiked = false;
-                                          });
-                                          _repository.dislikePlayer(playerId);
-                                        }
-                                      },
-                                      isActive: _hasDisliked,
-                                    ),
-                                  ],
-                                ),
-
-                                // Add button
-                                Container(
-                                  width: 70,
-                                  height: 70,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF8FBC6B),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: IconButton(
-                                    onPressed: () {
-                                      _showAddPlayerDialog(player);
-                                    },
-                                    icon: const Icon(
-                                      Icons.add,
-                                      size: 36,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-
-                                // Likes and Dislikes count
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Row(
-                                      children: [
-                                        Text(
-                                          'Likes',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        SizedBox(width: 16),
-                                        Text(
-                                          'Dislikes',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          '${player.likes}',
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 32),
-                                        Text(
-                                          '${player.dislikes}',
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.red,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-      bottomNavigationBar: const AppBottomNavBar(activeIndex: 2),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-    bool isActive = false,
-  }) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF6B8E4E) : const Color(0xFF4A5568),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white,
-          width: 2,
-        ),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(
-          icon,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
-    );
-  }
-
-  void _showAddPlayerDialog(PlayerModel player) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Player'),
-        content: Text('Do you want to add ${player.name} to your team?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6B8E4E),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${player.name} added to your team!'),
-                  backgroundColor: const Color(0xFF6B8E4E),
-                ),
-              );
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// 🔥 YENİ EKLENEN WIDGET - ÜST BAR (Theme Butonu ile)
-class _PlayerInfoTopBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
+    final playerId = ModalRoute.of(context)!.settings.arguments as String;
+    final authService = Provider.of<AuthService>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
 
-    return Container(
-      width: double.infinity,
-      height: 80,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [Colors.grey.shade900, Colors.grey.shade800]
-              : [Color(0xFF6B8E4E), Color(0xFF8FBC6B)],
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      appBar: AppBar(title: const Text("Player Info")),
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: authService.getPlayerStream(playerId),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final playerData = snapshot.data!.data() as Map<String, dynamic>;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _ProfileHeader(playerData: playerData),
+                const SizedBox(height: 24),
+                _PlayerInfoCard(playerData: playerData),
+                const SizedBox(height: 24),
+                _PreviousMatchesSection(playerTeamId: playerData['currentTeamId']),
+                const SizedBox(height: 24),
+                _ActionButtons(playerData: playerData, playerId: playerId),
+              ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: const AppBottomNavBar(activeIndex: 3),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  final Map<String, dynamic> playerData;
+  const _ProfileHeader({required this.playerData});
+
+  @override
+  Widget build(BuildContext context) {
+    final photoUrl = playerData['photoUrl'] as String?;
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 50,
+          backgroundImage: (photoUrl != null && photoUrl.isNotEmpty) 
+              ? NetworkImage(photoUrl) 
+              : const AssetImage('lib/images/sample_player.jpeg') as ImageProvider,
+        ),
+        const SizedBox(height: 12),
+        const Text("Player Info", style: kHeaderTextStyle),
+      ],
+    );
+  }
+}
+
+class _PlayerInfoCard extends StatelessWidget {
+  final Map<String, dynamic> playerData;
+  const _PlayerInfoCard({required this.playerData});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Text(playerData['name'] ?? 'N/A', style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Text("Age: ${playerData['age'] ?? 'N/A'}"),
+                Text("Position: ${playerData['position'] ?? 'N/A'}"),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text("ID: ${playerData['id'] ?? 'N/A'}", style: Theme.of(context).textTheme.bodySmall),
+          ],
         ),
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          const Center(
-            child: Text(
-              'Player Information',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
+    );
+  }
+}
 
-          // Sağ üst theme butonu
-          Positioned(
-            top: 20,
-            right: 16,
-            child: IconButton(
-              onPressed: () {
-                context.read<SettingsProvider>().toggleTheme();
-              },
-              icon: Icon(
-                isDark ? Icons.dark_mode : Icons.light_mode,
-                color: isDark ? Colors.black : Colors.white, // Icon rengi
-              ),
+class _PreviousMatchesSection extends StatelessWidget {
+  final String? playerTeamId;
+  const _PreviousMatchesSection({this.playerTeamId});
+
+  @override
+  Widget build(BuildContext context) {
+    final matchService = MatchService();
+    final List<String> teamIds = playerTeamId != null ? [playerTeamId!] : [];
+
+    return Column(
+      children: [
+        const Text("Previous Matches"),
+        const SizedBox(height: 8),
+        StreamBuilder<QuerySnapshot>(
+          stream: matchService.getPreviousMatchesStream(teamIds, limit: 3),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return const Text("No recent matches.");
+            }
+            final matches = snapshot.data!.docs;
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: matches.map((doc) {
+                 final data = doc.data() as Map<String, dynamic>;
+                 final scoreA = data['scoreA'] ?? 0;
+                 final scoreB = data['scoreB'] ?? 0;
+                 return Chip(label: Text('$scoreA - $scoreB'));
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionButtons extends StatelessWidget {
+  final Map<String, dynamic> playerData;
+  final String playerId;
+  const _ActionButtons({required this.playerData, required this.playerId});
+
+  @override
+  Widget build(BuildContext context) {
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final currentUser = authService.currentUser!;
+
+    final voters = Map<String, bool>.from(playerData['voters'] ?? {});
+    final hasVoted = voters.containsKey(currentUser.uid);
+    final currentVote = hasVoted ? voters[currentUser.uid] : null;
+
+    return Column(
+      children: [
+        _buildPlusButton(context, currentUser.uid),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Column(
+              children: [
+                IconButton(
+                  onPressed: () => authService.likeDislikePlayer(playerId, isLike: true),
+                  icon: Icon(Icons.thumb_up, color: currentVote == true ? Colors.green : Colors.grey),
+                ),
+                Text("Likes: ${playerData['likes'] ?? 0}"),
+              ],
             ),
-          ),
-        ],
-      ),
+            Column(
+              children: [
+                IconButton(
+                  onPressed: () => authService.likeDislikePlayer(playerId, isLike: false),
+                  icon: Icon(Icons.thumb_down, color: currentVote == false ? Colors.red : Colors.grey),
+                ),
+                Text("Dislikes: ${playerData['dislikes'] ?? 0}"),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlusButton(BuildContext context, String currentUserId) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('players').doc(currentUserId).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        
+        final adminPlayerData = snapshot.data!.data() as Map<String, dynamic>;
+        final adminTeamId = adminPlayerData['currentTeamId'] as String?;
+        final viewedPlayerTeamId = playerData['currentTeamId'] as String?;
+
+        if (adminTeamId == null || adminTeamId == viewedPlayerTeamId) {
+          // Hide if admin is not in a team or if the player is already in the admin's team
+          return const SizedBox.shrink();
+        }
+
+        return FutureBuilder<TeamModel?>(
+          future: TeamService().getTeam(adminTeamId),
+          builder: (context, teamSnapshot) {
+            if (!teamSnapshot.hasData) return const SizedBox.shrink();
+            
+            final team = teamSnapshot.data!;
+            final bool isUserAdmin = team.createdBy == currentUserId;
+            
+            if (isUserAdmin) {
+              return FloatingActionButton(
+                onPressed: () { /* TODO: Implement team invite logic */ },
+                backgroundColor: Colors.green,
+                child: const Icon(Icons.add),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        );
+      },
     );
   }
 }
