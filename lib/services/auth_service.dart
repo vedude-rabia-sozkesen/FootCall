@@ -106,6 +106,28 @@ class AuthService {
     });
   }
 
+  /// Delete a player account (only the player themselves can delete)
+  Future<void> deletePlayer(String playerId) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user == null) {
+        throw Exception("User not logged in");
+      }
+
+      if (user.uid != playerId) {
+        throw Exception("You can only delete your own account");
+      }
+
+      // Delete player document from Firestore
+      await _firestore.collection('players').doc(playerId).delete();
+      
+      // Delete the Firebase Auth account
+      await user.delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<UserCredential?> login({
     required String email,
     required String password,

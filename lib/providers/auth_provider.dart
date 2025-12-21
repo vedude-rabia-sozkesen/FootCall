@@ -111,6 +111,30 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Delete user account
+  Future<void> deleteAccount() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      if (_user == null) {
+        throw Exception("No user logged in");
+      }
+
+      await _authService.deletePlayer(_user!.uid);
+      
+      // User will be updated via stream listener (will be null after deletion)
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   @override
   void dispose() {
     _authSubscription?.cancel();

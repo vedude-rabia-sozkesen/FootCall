@@ -151,4 +151,30 @@ class MatchService {
       rethrow;
     }
   }
+
+  /// Delete a match (only creator can delete)
+  Future<void> deleteMatch(String matchId) async {
+    try {
+      final User? user = _auth.currentUser;
+      if (user == null) {
+        throw Exception("User not logged in");
+      }
+
+      final matchRef = _firestore.collection('matches').doc(matchId);
+      final matchDoc = await matchRef.get();
+      
+      if (!matchDoc.exists) {
+        throw Exception("Match does not exist");
+      }
+
+      final matchData = matchDoc.data() as Map<String, dynamic>;
+      if (matchData['createdBy'] != user.uid) {
+        throw Exception("Only the match creator can delete this match");
+      }
+
+      await matchRef.delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

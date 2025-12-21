@@ -104,6 +104,26 @@ class MatchesProvider extends ChangeNotifier {
     }
   }
 
+  // Delete match
+  Future<void> deleteMatch(String matchId) async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      await _matchService.deleteMatch(matchId);
+      
+      // Matches will be updated via stream listener
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
   // Get match by ID
   QueryDocumentSnapshot? getMatchById(String matchId) {
     try {

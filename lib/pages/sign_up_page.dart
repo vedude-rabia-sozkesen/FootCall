@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import '../utils/colors.dart';
 import '../utils/styles.dart';
@@ -36,6 +37,25 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
+  String _getFriendlyErrorMessage(String code) {
+    switch (code) {
+      case 'weak-password':
+        return 'The password provided is too weak. Please use a stronger password.';
+      case 'email-already-in-use':
+        return 'An account already exists for this email. Please sign in instead.';
+      case 'invalid-email':
+        return 'The email address is invalid. Please check and try again.';
+      case 'operation-not-allowed':
+        return 'Email/password accounts are not enabled. Please contact support.';
+      case 'network-request-failed':
+        return 'Network error. Please check your internet connection and try again.';
+      case 'too-many-requests':
+        return 'Too many requests. Please wait a moment and try again.';
+      default:
+        return 'An error occurred during sign up. Please try again.';
+    }
+  }
+
   Future<void> _onSignUpPressed() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty || _nameController.text.isEmpty || _ageController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,10 +78,24 @@ class _SignUpPageState extends State<SignUpPage> {
         // IMPORTANT: Let AuthGate handle the navigation to Home.
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_getFriendlyErrorMessage(e.code)),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     }
