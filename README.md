@@ -1,40 +1,78 @@
 # FootCall
 
-*FootCall* is a mobile application that helps people find nearby players who are looking for others to play halısaha (indoor soccer). It connects individuals based on location, playing style, and preferred position, making it easy to organize spontaneous or planned matches.
+FootCall is a mobile application designed to help amateur football players and teams easily organize and manage **halısaha (indoor soccer)** matches. The app focuses on connecting teams, managing match workflows, and providing real-time updates through Firebase.
 
 ---
 
 ## Overview
 
-FootCall aims to make soccer more accessible and social by creating a platform where users can:
-•⁠  ⁠Find nearby players or teams.
-•⁠  ⁠Join or create groups (called "clans") to play regularly.
-•⁠  ⁠Connect with halısaha owners for quick and automated bookings.
-•⁠  ⁠Match with other players when abroad or in a new city.
-•⁠  ⁠Filter players by their preferred position or availability.
+FootCall provides a centralized platform where users can:
 
-The app strengthens the football community by combining *social connection, **location awareness, and **automation, allowing everyone to focus on what really matters — *the game itself.
+- Discover existing teams and matches  
+- Create and manage match requests between teams  
+- View match details and real-time updates  
+- Manage authentication-based access to application features  
 
----
-
-## Features
-
-•⁠  ⁠*Smart Player Matching* — Find people near you who want to play at similar times.  
--  *Clan System* — Create or join groups to form lasting squads.  
--  *Travel Mode* — Match with players when you’re out of town or abroad.  
--  *Position Filter* — Search players by position (goalkeeper, defender, striker, etc.).  
-•⁠  ⁠*Halısaha Integration* — Connect with field owners and automate reservations.  
--  *Player Profiles* — Showcase skill level, position, and play history.
-
-## Team Information
-
-- Berk Karaduman (29428): Finding the app name, openning a group for members.
-- Vedude Rabia Sözkesen (32182): Openning and arranging the GitHub repository.
-- Elif Tuana Doğan (31914): Preparing the project description and creating the content.
-- Mehmet Fatih Paksoy (32519): Preparing the project proposal document 
-- Ömer Ersoy (32572): Developing the ideas and content
-- Arda Dinç (31256): Developing the ideas and content
+The application is built with **Flutter** and uses **Firebase** for authentication, data storage, and real-time synchronization. State management is handled using the **Provider** architecture to ensure scalable and maintainable UI updates.
 
 ---
 
-###  "Find your match. Call your game." — FootCall
+## Key Features
+
+### Authentication & Access Control
+- User authentication with Firebase Authentication  
+- Logged-out users are restricted to login and signup screens  
+- Logged-in users can access main application features  
+
+### Match Management
+- Real-time match listing using Firestore streams  
+- Match status updates (scheduled, played, canceled)  
+- Admin-only actions for match updates (based on team ownership)  
+- Match creation requests between teams  
+
+### Team Management
+- Team listing with real-time updates  
+- Team detail pages  
+- Team-based authorization for match-related actions  
+
+### UI & State Handling
+- Loading, empty, and error states implemented across main screens  
+- Real-time UI updates when Firestore data changes  
+- Dark and light theme support using SharedPreferences  
+- Bottom navigation for main sections of the app  
+
+---
+
+## Technical Stack
+
+- **Flutter** — UI framework  
+- **Firebase Authentication** — User authentication  
+- **Cloud Firestore** — Real-time database  
+- **Provider** — State management  
+- **SharedPreferences** — Persistent local settings (theme, state)  
+
+---
+
+## Project Structure Highlights
+
+- `lib/screens/` — UI screens (home, matches, teams, authentication)  
+- `lib/providers/` — State management (auth, matches, teams, settings)  
+- `lib/services/` — Firebase service abstractions  
+- `lib/models/` — Data models   
+
+---
+
+## Team Members
+
+- **Berk Karaduman (29428)** — Firebase setup, application infrastructure, SharedPreferences  
+- **Vedude Rabia Sözkesen (32182)** — Provider architecture and state management  
+- **Elif Tuana Doğan (31914)** — Firestore security rules, testing, deployment, and documentation  
+- **Mehmet Fatih Paksoy (32519)** — Authentication flows and UI implementation  
+- **Ömer Ersoy (32572)** — Firestore data models, services, and CRUD operations  
+- **Arda Dinç (31256)** — UI integration, real-time data display, navigation guard implementation  
+
+---
+
+## Project Motto
+
+**“Find your match. Call your game.” — FootCall**
