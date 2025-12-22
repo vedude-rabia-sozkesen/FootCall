@@ -200,6 +200,15 @@ class _PlayerRequestsTopBar extends StatelessWidget {
       color: isDark ? Colors.grey[850] : kAppGreen,
       child: Stack(
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ),
           Center(
             child: Text(
               'Player Requests',
