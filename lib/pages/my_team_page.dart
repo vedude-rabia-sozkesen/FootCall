@@ -371,11 +371,28 @@ class _TopBar extends StatelessWidget {
       width: double.infinity,
       height: 100,
       color: isDark ? Colors.grey[850] : kAppGreen,
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 20),
-          child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-        ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 16,
+            top: 35,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -36,6 +36,17 @@ class MatchService {
   }
 
 
+  Future<void> updateMatchStatus({
+    required String matchId,
+    required String status,
+  }) async {
+    try {
+      await _firestore.collection('matches').doc(matchId).update({'status': status});
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   Future<void> updateMatchResult({
     required String matchId,
     required int scoreA,

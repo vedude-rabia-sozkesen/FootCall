@@ -1,47 +1,72 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class MatchModel {
   const MatchModel({
     required this.id,
-    required this.cityDistrict,
-    required this.matchTitle,
-    required this.timeRange,
+    required this.teamAId,
+    required this.teamBId,
+    required this.status,
+    required this.matchDate,
+    this.scoreA,
+    this.scoreB,
     required this.location,
-    required this.playingTeam,
-    required this.creatorName,
-    required this.assetLogoPath,
-    required this.coverImageUrl,
+    this.createdBy,
+    this.createdAt,
   });
 
   final String id;
-  final String cityDistrict;
-  final String matchTitle;
-  final String timeRange;
+  final String teamAId;
+  final String teamBId;
+  final String status;
+  final Timestamp matchDate;
+  final int? scoreA;
+  final int? scoreB;
   final String location;
-  final String playingTeam;
-  final String creatorName;
-  final String assetLogoPath;
-  final String coverImageUrl;
+  final String? createdBy;
+  final Timestamp? createdAt;
+
+  factory MatchModel.fromMap(Map<String, dynamic> map, String id) {
+    return MatchModel(
+      id: id,
+      teamAId: map['teamA_id'] as String? ?? '',
+      teamBId: map['teamB_id'] as String? ?? '',
+      status: map['status'] as String? ?? 'scheduled',
+      matchDate: map['matchDate'] as Timestamp? ?? Timestamp.now(),
+      scoreA: map['scoreA'] as int?,
+      scoreB: map['scoreB'] as int?,
+      location: map['location'] as String? ?? '',
+      createdBy: map['createdBy'] as String?,
+      createdAt: map['createdAt'] as Timestamp?,
+    );
+  }
+
+  factory MatchModel.fromDocumentSnapshot(DocumentSnapshot doc) {
+    return MatchModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+  }
 
   MatchModel copyWith({
     String? id,
-    String? cityDistrict,
-    String? matchTitle,
-    String? timeRange,
+    String? teamAId,
+    String? teamBId,
+    String? status,
+    Timestamp? matchDate,
+    int? scoreA,
+    int? scoreB,
     String? location,
-    String? playingTeam,
-    String? creatorName,
-    String? assetLogoPath,
-    String? coverImageUrl,
+    String? createdBy,
+    Timestamp? createdAt,
   }) {
     return MatchModel(
       id: id ?? this.id,
-      cityDistrict: cityDistrict ?? this.cityDistrict,
-      matchTitle: matchTitle ?? this.matchTitle,
-      timeRange: timeRange ?? this.timeRange,
+      teamAId: teamAId ?? this.teamAId,
+      teamBId: teamBId ?? this.teamBId,
+      status: status ?? this.status,
+      matchDate: matchDate ?? this.matchDate,
+      scoreA: scoreA ?? this.scoreA,
+      scoreB: scoreB ?? this.scoreB,
       location: location ?? this.location,
-      playingTeam: playingTeam ?? this.playingTeam,
-      creatorName: creatorName ?? this.creatorName,
-      assetLogoPath: assetLogoPath ?? this.assetLogoPath,
-      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

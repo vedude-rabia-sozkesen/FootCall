@@ -327,6 +327,18 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           Positioned(
+            left: 16,
+            top: 35,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Icon(
+                Icons.arrow_back,
+                color: isDark ? Colors.white : Colors.black,
+                size: 28,
+              ),
+            ),
+          ),
+          Positioned(
             top: 35,
             child: const Text('Team Info', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
           ),

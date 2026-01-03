@@ -193,7 +193,20 @@ class _PlayersTopBar extends StatelessWidget {
       height: 80,
       color: isDark ? Colors.grey[850] : const Color(0xFF4A5568),
       child: Stack(
+        alignment: Alignment.center,
         children: [
+          Positioned(
+            left: 16,
+            top: 35,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              child: Icon(
+                Icons.arrow_back,
+                color: isDark ? Colors.white : Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
           const Center(child: Text('Players', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white))),
           Align(
             alignment: Alignment.centerRight,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../mixins/theme_mixin.dart';
 import '../data/match_repository.dart';
@@ -197,15 +198,11 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
     final match = MatchModel(
       id: const Uuid().v4(),
-      cityDistrict: _cityController.text.trim(),
-      matchTitle: _teamController.text.trim(),
-      timeRange: _timeController.text.trim(),
+      teamAId: 'team-${_teamController.text.trim()}',
+      teamBId: 'team-opponent',
+      status: 'scheduled',
+      matchDate: Timestamp.now(),
       location: _locationController.text.trim(),
-      playingTeam: _teamController.text.trim(),
-      creatorName: 'You',
-      assetLogoPath: 'lib/images/team_logo.png',
-      coverImageUrl:
-      'https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf',
     );
 
     _repository.addMatch(match);

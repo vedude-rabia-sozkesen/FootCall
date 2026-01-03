@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/match_service.dart';
 import '../services/team_service.dart';
 import '../models/team_model.dart';
+import '../models/match_model.dart';
 import '../providers/setting_provider.dart';
 import '../providers/auth_provider.dart' as app_auth;
 import '../providers/teams_provider.dart';
@@ -38,7 +39,7 @@ class MatchInfoScreen extends StatelessWidget {
             return const Center(child: Text('Match not found.'));
           }
 
-          final matchData = snapshot.data!.data() as Map<String, dynamic>;
+          final match = MatchModel.fromDocumentSnapshot(snapshot.data!);
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -53,9 +54,9 @@ class MatchInfoScreen extends StatelessWidget {
                   children: [
                     _buildHeader(isDark),
                     const SizedBox(height: kDefaultPadding * 1.5),
-                    _InfoCard(matchData: matchData, isDark: isDark),
+                    _InfoCard(match: match, isDark: isDark),
                     const SizedBox(height: kDefaultPadding),
-                    _AdminControls(matchId: matchId, matchData: matchData),
+                    _AdminControls(matchId: matchId, match: match),
                   ],
                 ),
               ),
@@ -110,23 +111,20 @@ String _getStatusDisplayText(String status) {
 }
 
 class _InfoCard extends StatelessWidget {
-  final Map<String, dynamic> matchData;
+  final MatchModel match;
   final bool isDark;
 
-  const _InfoCard({required this.matchData, required this.isDark});
+  const _InfoCard({required this.match, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
     final teamService = TeamService();
-    final teamAId = matchData['teamA_id'];
-    final teamBId = matchData['teamB_id'];
-    final location = matchData['location'] ?? 'N/A';
-    final timestamp = matchData['matchDate'] as Timestamp?;
-    final date = timestamp != null
-        ? DateFormat('dd/MM/yyyy - HH:mm').format(timestamp.toDate())
-        : 'N/A';
-    final scoreA = matchData['scoreA'];
-    final scoreB = matchData['scoreB'];
+    final teamAId = match.teamAId;
+    final teamBId = match.teamBId;
+    final location = match.location;
+    final date = DateFormat('dd/MM/yyyy - HH:mm').format(match.matchDate.toDate());
+    final scoreA = match.scoreA;
+    final scoreB = match.scoreB;
     final scoreDisplay = scoreA != null && scoreB != null ? '$scoreA - $scoreB' : 'Not played';
 
     return Container(
@@ -145,7 +143,7 @@ class _InfoCard extends StatelessWidget {
             children: [
               _InfoRow(label: 'Teams', value: '${teamA?.name ?? '...'} vs ${teamB?.name ?? '...'}'),
               const SizedBox(height: kSmallPadding),
-              _InfoRow(label: 'Status', value: _getStatusDisplayText(matchData['status'] ?? 'scheduled')),
+              _InfoRow(label: 'Status', value: _getStatusDisplayText(match.status)),
               const SizedBox(height: kSmallPadding),
               _InfoRow(label: 'Score', value: scoreDisplay),
               const SizedBox(height: kSmallPadding),
@@ -162,9 +160,9 @@ class _InfoCard extends StatelessWidget {
 
 class _AdminControls extends StatelessWidget {
   final String matchId;
-  final Map<String, dynamic> matchData;
+  final MatchModel match;
 
-  const _AdminControls({required this.matchId, required this.matchData});
+  const _AdminControls({required this.matchId, required this.match});
 
   Future<bool> _isUserAdminOfMatch(String? userId, String teamAId, String teamBId, TeamsProvider teamsProvider) async {
     if (userId == null) return false;
@@ -188,10 +186,10 @@ class _AdminControls extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final teamAId = matchData['teamA_id'] as String?;
-    final teamBId = matchData['teamB_id'] as String?;
+    final teamAId = match.teamAId;
+    final teamBId = match.teamBId;
 
-    if (teamAId == null || teamBId == null) {
+    if (teamAId.isEmpty || teamBId.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -209,8 +207,8 @@ class _AdminControls extends StatelessWidget {
               return const SizedBox.shrink();
             }
 
-            final currentMatchData = matchSnapshot.data!.data() as Map<String, dynamic>;
-            final currentStatus = currentMatchData['status'] ?? 'scheduled';
+            final currentMatch = MatchModel.fromDocumentSnapshot(matchSnapshot.data!);
+            final currentStatus = currentMatch.status;
             
             // Map old statuses
             String displayStatus = currentStatus;
@@ -229,7 +227,7 @@ class _AdminControls extends StatelessWidget {
                   const SizedBox(height: kDefaultPadding),
                   _ScoreEditor(
                     matchId: matchId,
-                    matchData: currentMatchData,
+                    match: currentMatch,
                     teamAId: teamAId,
                     teamBId: teamBId,
                   ),
@@ -320,7 +318,8 @@ class _StatusSelector extends StatelessWidget {
 
   Future<void> _updateStatus(BuildContext context, String newStatus) async {
     try {
-      await FirebaseFirestore.instance.collection('matches').doc(matchId).update({'status': newStatus});
+      final matchService = MatchService();
+      await matchService.updateMatchStatus(matchId: matchId, status: newStatus);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -377,13 +376,13 @@ class _StatusChip extends StatelessWidget {
 
 class _ScoreEditor extends StatelessWidget {
   final String matchId;
-  final Map<String, dynamic> matchData;
+  final MatchModel match;
   final String teamAId;
   final String teamBId;
 
   const _ScoreEditor({
     required this.matchId,
-    required this.matchData,
+    required this.match,
     required this.teamAId,
     required this.teamBId,
   });
@@ -394,8 +393,8 @@ class _ScoreEditor extends StatelessWidget {
     final matchesProvider = Provider.of<MatchesProvider>(context, listen: false);
     final isDark = context.watch<SettingsProvider>().isDarkMode;
     
-    final scoreA = matchData['scoreA'] as int?;
-    final scoreB = matchData['scoreB'] as int?;
+    final scoreA = match.scoreA;
+    final scoreB = match.scoreB;
 
     return FutureBuilder<List<TeamModel?>>(
       future: Future.wait([

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/match_model.dart';
 
@@ -33,39 +34,30 @@ class MatchRepository {
   static final List<MatchModel> _initialMatches = [
     MatchModel(
       id: 'match-1',
-      cityDistrict: 'Ankara/Polatlı',
-      matchTitle: 'Lions vs Birds',
-      timeRange: '12.00-14.00',
+      teamAId: 'team-lions',
+      teamBId: 'team-birds',
+      status: 'scheduled',
+      matchDate: Timestamp.fromDate(DateTime.now().add(const Duration(days: 1))),
       location: 'Polatlı Arena, Ankara',
-      playingTeam: 'Lions',
-      creatorName: 'Coach Selim',
-      assetLogoPath: 'lib/images/team_logo.png',
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1461896836934-ffe607ba8211',
+      createdBy: 'coach-selim',
     ),
     MatchModel(
       id: 'match-2',
-      cityDistrict: 'İstanbul/Gaziosmanpaşa',
-      matchTitle: 'Team0',
-      timeRange: '11.00-13.00',
+      teamAId: 'team-0',
+      teamBId: 'team-1',
+      status: 'scheduled',
+      matchDate: Timestamp.fromDate(DateTime.now().add(const Duration(days: 2))),
       location: 'Albayrak football field, Gaziosmanpaşa/İstanbul',
-      playingTeam: 'Team0',
-      creatorName: 'Coach Duru',
-      assetLogoPath: 'lib/images/team_logo.png',
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1508804185872-d7badad00f7d',
+      createdBy: 'coach-duru',
     ),
     MatchModel(
       id: 'match-3',
-      cityDistrict: 'Ankara/Polatlı',
-      matchTitle: 'Lions vs Birds',
-      timeRange: '12.00-14.00',
+      teamAId: 'team-lions',
+      teamBId: 'team-birds',
+      status: 'scheduled',
+      matchDate: Timestamp.fromDate(DateTime.now().add(const Duration(days: 3))),
       location: 'Polatlı Arena, Ankara',
-      playingTeam: 'Birds',
-      creatorName: 'Coach Onur',
-      assetLogoPath: 'lib/images/team_logo.png',
-      coverImageUrl:
-          'https://images.unsplash.com/photo-1508609349937-5ec4ae374ebf',
+      createdBy: 'coach-onur',
     ),
   ];
 }
