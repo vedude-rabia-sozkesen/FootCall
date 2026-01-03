@@ -23,11 +23,10 @@ class RequestRepository {
   final _uuid = const Uuid();
 
   void addTeamRequest(MatchModel match) {
-    final matchTitle = 'Match at ${match.location}';
     final request = TeamRequest(
       id: _uuid.v4(),
       teamName: placeholderTeamName,
-      matchTitle: matchTitle,
+      matchTitle: match.matchTitle,
       matchId: match.id,
       createdAt: DateTime.now(),
     );
@@ -37,11 +36,10 @@ class RequestRepository {
   }
 
   void addPlayerRequest(MatchModel match) {
-    final matchTitle = 'Match at ${match.location}';
     final request = PlayerJoinRequest(
       id: _uuid.v4(),
       playerName: placeholderPlayerName,
-      matchTitle: matchTitle,
+      matchTitle: match.matchTitle,
       matchId: match.id,
       createdAt: DateTime.now(),
     );
@@ -52,11 +50,10 @@ class RequestRepository {
 
   /// Add team request for a specific match creator (admin)
   void addTeamRequestForCreator(MatchModel match, String creatorName) {
-    final matchTitle = 'Match at ${match.location}';
     final request = TeamRequest(
       id: _uuid.v4(),
       teamName: placeholderTeamName,
-      matchTitle: matchTitle,
+      matchTitle: match.matchTitle,
       matchId: match.id,
       createdAt: DateTime.now(),
     );
@@ -70,11 +67,10 @@ class RequestRepository {
 
   /// Add player request for a specific match creator (admin)
   void addPlayerRequestForCreator(MatchModel match, String creatorName) {
-    final matchTitle = 'Match at ${match.location}';
     final request = PlayerJoinRequest(
       id: _uuid.v4(),
       playerName: placeholderPlayerName,
-      matchTitle: matchTitle,
+      matchTitle: match.matchTitle,
       matchId: match.id,
       createdAt: DateTime.now(),
     );
