@@ -175,6 +175,14 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           Positioned(
+            left: 16,
+            top: 35,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Positioned(
             top: 35,
             child: Text(
               'Team Info',

@@ -329,25 +329,20 @@ class _TopBar extends StatelessWidget {
           Positioned(
             left: 16,
             top: 35,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              child: Icon(
-                Icons.arrow_back,
-                color: isDark ? Colors.white : Colors.black,
-                size: 28,
-              ),
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
+              onPressed: () => Navigator.pop(context),
             ),
           ),
           Positioned(
             top: 35,
-            child: const Text('Team Info', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black)),
-          ),
-          Positioned(
-            left: 16,
-            top: 35,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Team Info',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
         ],
