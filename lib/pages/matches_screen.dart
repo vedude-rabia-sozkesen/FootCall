@@ -69,7 +69,7 @@ class _MatchesScreenState extends State<MatchesScreen> {
             Expanded(
               child: _buildMatchesList(matchesProvider, matchesProvider.matches, user?.uid),
             ),
-            if (user != null) _CreateMatchButton(),
+            if (user != null) _CreateMatchButton(userId: user.uid),
           ],
         ),
       ),
@@ -133,26 +133,57 @@ class _ListHeader extends StatelessWidget {
 }
 
 class _CreateMatchButton extends StatelessWidget {
+  final String userId;
+  
+  const _CreateMatchButton({required this.userId});
+
+  // Check if user is admin of any team
+  Future<bool> _isUserTeamAdmin(String userId) async {
+    try {
+      final teamsSnapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .where('createdBy', isEqualTo: userId)
+          .limit(1)
+          .get();
+      
+      return teamsSnapshot.docs.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<SettingsProvider>().isDarkMode;
-    return Padding(
-      padding: const EdgeInsets.all(kDefaultPadding),
-      child: Column(
-        children: [
-          Text(
-            'Create Match',
-            style: kCardTitleStyle.copyWith(
-              color: isDark ? Colors.white : Colors.black,
+    
+    return FutureBuilder<bool>(
+      future: _isUserTeamAdmin(userId),
+      builder: (context, snapshot) {
+        // Only show button if user is a team admin
+        if (snapshot.hasData && snapshot.data == true) {
+          return Padding(
+            padding: const EdgeInsets.all(kDefaultPadding),
+            child: Column(
+              children: [
+                Text(
+                  'Create Match',
+                  style: kCardTitleStyle.copyWith(
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateMatchRequestPage())),
+                  child: const CircleAvatar(radius: 36, backgroundColor: Color(0xFF87C56C), child: Icon(Icons.add, color: Colors.white, size: 36)),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => const CreateMatchRequestPage())),
-            child: const CircleAvatar(radius: 36, backgroundColor: Color(0xFF87C56C), child: Icon(Icons.add, color: Colors.white, size: 36)),
-          ),
-        ],
-      ),
+          );
+        }
+        
+        // Return empty widget if user is not an admin or still loading
+        return const SizedBox.shrink();
+      },
     );
   }
 }
