@@ -187,7 +187,7 @@ class _MatchesHeader extends StatelessWidget {
           Center(child: Text('Matches', style: kCardTitleStyle.copyWith(fontSize: 18))),
           Positioned(top: 4, right: 8, child: IconButton(
             onPressed: settings.toggleTheme,
-            icon: Icon(settings.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: settings.isDarkMode ? Colors.black : Colors.white),
+            icon: Icon(settings.isDarkMode ? Icons.dark_mode : Icons.light_mode, color: Colors.white),
           )),
         ],
       ),
