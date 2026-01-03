@@ -176,14 +176,14 @@ class _TopBar extends StatelessWidget {
           ),
           Positioned(
             left: 16,
-            top: 35,
+            top: 26, // Center of the green box: (20 + 60/2) - 24 = 26 (IconButton is 48px tall, so center is at top + 24)
             child: IconButton(
               icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
               onPressed: () => Navigator.pop(context),
             ),
           ),
           Positioned(
-            top: 35,
+            top: 50, // Vertically centered with the green box
             child: Text(
               'Team Info',
               style: TextStyle(
@@ -195,7 +195,7 @@ class _TopBar extends StatelessWidget {
           ),
           // Dark/Light mode button
           Positioned(
-            top: 35,
+            top: 50, // Vertically centered with the green box
             right: 20,
             child: Material(
               color: Colors.transparent,
