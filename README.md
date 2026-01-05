@@ -62,6 +62,23 @@ The application is built with **Flutter** and uses **Firebase** for authenticati
 
 ---
 
+
+## Testing
+
+### Unit Test: `test/unit_test.dart`
+This test covers the `PrefsService` class, which manages local user preferences using `SharedPreferences`.
+- It verifies that the theme mode (dark/light) can be saved and loaded correctly.
+- It checks that the last selected navigation tab index is persisted and retrieved properly.
+- It confirms that the `clearAll` function successfully removes all stored preferences.
+
+### Widget Test: `test/widget_test.dart`
+This test focuses on the `AppBottomNav` widget, the main navigation bar of the app.
+- It ensures that the bottom navigation bar and its icons (Home, Profile) are rendered on the screen.
+- It simulates user taps on the navigation icons and verifies that the `onItemTapped` callback is triggered with the correct index, ensuring that the navigation logic behaves as expected.
+
+
+---
+
 ## Team Members
 
 - **Berk Karaduman (29428)** — Firebase setup, application infrastructure, SharedPreferences  

@@ -41,24 +41,28 @@ class AppBottomNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           _BottomItem(
+            itemKey: const Key('nav_home'),
             imagePath: 'lib/images/home_logo.png',
             label: 'Home',
             isActive: activeIndex == 0,
             onTap: () => _onTap(context, 0),
           ),
           _BottomItem(
+            itemKey: const Key('nav_my_team'),
             imagePath: 'lib/images/myteam_logo.png',
             label: 'My Team',
             isActive: activeIndex == 1,
             onTap: () => _onTap(context, 1),
           ),
           _BottomItem(
+            itemKey: const Key('nav_search'),
             imagePath: 'lib/images/search_logo.png',
             label: 'Search',
             isActive: activeIndex == 2,
             onTap: () => _onTap(context, 2),
           ),
           _BottomItem(
+            itemKey: const Key('nav_my_player'),
             imagePath: 'lib/images/myprofile_logo.png',
             label: 'MyProfile',
             isActive: activeIndex == 3,
@@ -75,17 +79,20 @@ class _BottomItem extends StatelessWidget {
   final String label;
   final bool isActive;
   final VoidCallback onTap;
+  final Key? itemKey;
 
   const _BottomItem({
     required this.imagePath,
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.itemKey,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      key: itemKey,
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
