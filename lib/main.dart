@@ -98,7 +98,7 @@ class MyApp extends StatelessWidget {
               '/matches': (context) => MatchesScreen(),
               '/match-info': (context) => const MatchInfoScreen(),
               '/create-match': (context) => const CreateMatchScreen(),
-              '/admin': (context) => const AdminPanelScreen(), // AdminPanelScreen handles its own access control
+              '/admin': (context) => const AdminPanelScreen(),
               '/requests': (context) => const PlayerRequestsScreen(),
               '/teams': (context) => const TeamsScreen(),
               '/player-info': (context) => const PlayerInfoScreen(),
